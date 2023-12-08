@@ -98,6 +98,7 @@ int main(void)
   //activateMultiLED_Test();
   init_Test();
   #else
+  system_init();
   #endif
 
   /* USER CODE END 2 */

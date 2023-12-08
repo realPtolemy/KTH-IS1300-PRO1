@@ -104,31 +104,94 @@ void pedestrianLED_Test_W() {
 }
 
 // Test of enhanced staging and latching of bits to register
-
 extern uint8_t REG[];
+// Stage bits via the shift register buffer array
 void stageReg_Test(){
 	HAL_SPI_Transmit(&hspi3, &REG[2], 1, HAL_MAX_DELAY);
 	HAL_SPI_Transmit(&hspi3, &REG[1], 1, HAL_MAX_DELAY);
 	HAL_SPI_Transmit(&hspi3, &REG[0], 1, HAL_MAX_DELAY);
 }
 
+// Latch bits stored in shift register to storage register, for output
 void latchReg_Test(){
 	HAL_GPIO_WritePin(IC595_STCP_GPIO_Port, IC595_STCP_Pin, GPIO_PIN_SET);
 	HAL_GPIO_WritePin(IC595_STCP_GPIO_Port, IC595_STCP_Pin, GPIO_PIN_RESET);
 }
 
+// Simply test activating LEDs using shift register buffer array
 void activateLED_Test(){
-	REG[2] = 0b00101101;	// Third Shift Register, only the first 6 bits controls LEDs
-	REG[1] = 0b00101010;
-	REG[0] = 0b00010101;
+	REG[2] = 0b00000000;	// Third shift register, only the first 6 bits controls LEDs
+	REG[1] = 0b00000000;	// Second shift register
+	REG[0] = 0b00000000;	// First shift register
 	stageReg_Test();
 	latchReg_Test();
 }
 
+// Activate LEDs on current set of LEDs, by masking
 void activateMultiLED_Test(){
-	REG[2] = REG[2] & 0b00101101;
-	REG[1] = REG[1] & 0b00010101;
-	REG[0] = REG[0] & 0b00101010;
+	REG[2] = REG[2] & 0b00111111;	// Try applying masking to shift registers
+	REG[1] = REG[1] & 0b00111111;
+	REG[0] = REG[0] & 0b00111111;
 }
+
+/* Change NORTH & SOUTH TRAFFIC lights */
+void traffic_NS_Test(int status){
+	switch(status) {
+		case 1:	// Set the lights GREEN
+			// Start by masking and storing the state of all other traffic lights
+			REG[2] = REG[2] & 0b000111; // Mask current traffic lights at EAST, clear NORTH traffic lights
+			REG[1] = REG[1] & 0b111000;	// Mask current pedestrian lights at NORTH, clear SOUTH traffic lights
+			REG[0] = REG[0] & 0b111111; // Mask current traffic and pedestrian lights at WEST
+			// Bitwise-OR merge masked current states with new states for NORTH and SOUTH traffic lights
+			REG[2] = REG[2] | 0b100000; // Set NORTH traffic light bit to red
+			REG[1] = REG[1] | 0b000100; // Set SOUTH traffic light bit to red
+			break;
+		case 2: // Set the lights YELLOW
+			// Start by masking and storing the state of all other traffic lights
+			REG[2] = REG[2] & 0b000111; // Mask current traffic lights at EAST, clear NORTH traffic lights
+			REG[1] = REG[1] & 0b111000;	// Mask current pedestrian lights at NORTH, clear SOUTH traffic lights
+			REG[0] = REG[0] & 0b111111; // Mask current traffic and pedestrian lights at WEST
+			// Bitwise-OR merge masked current states with new states for NORTH and SOUTH traffic lights
+			REG[2] = REG[2] | 0b010000; // Set NORTH traffic light bit to red
+			REG[1] = REG[1] | 0b000010; // Set SOUTH traffic light bit to red
+			break;
+		case 3: // Set the lights RED
+			// Start by masking and storing the state of all other traffic lights
+			REG[2] = REG[2] & 0b000111; // Mask current traffic lights at EAST, clear NORTH traffic lights
+			REG[1] = REG[1] & 0b111000;	// Mask current pedestrian lights at NORTH, clear SOUTH traffic lights
+			REG[0] = REG[0] & 0b111111; // Mask current traffic and pedestrian lights at WEST
+			// Bitwise-OR merge masked current states with new states for NORTH and SOUTH traffic lights
+			REG[2] = REG[2] | 0b001000; // Set NORTH traffic light bit to red
+			REG[1] = REG[1] | 0b000001; // Set SOUTH traffic light bit to red
+			break;
+	}
+}
+
+void trafficRed_NS_Test(){
+	// Start by masking and storing the state of all other traffic lights
+	REG[2] = REG[2] & 0b000111; // Mask current traffic lights at EAST, clear NORTH traffic lights
+	REG[1] = REG[1] & 0b111000;	// Mask current pedestrian lights at NORTH, clear SOUTH traffic lights
+	REG[0] = REG[0] & 0b111111; // Mask current traffic and pedestrian lights at WEST
+	// Bitwise-OR merge masked current states with new states for NORTH and SOUTH traffic lights
+	REG[2] = REG[2] | 0b001000; // Set NORTH traffic light bit to red
+	REG[1] = REG[1] | 0b000001; // Set SOUTH traffic light bit to red
+}
+void trafficYellow_NS_Test(){}
+void trafficGreen_NS_Test(){}
+
+/* Set bits for EAST & WEST TRAFFIC lights */
+void trafficRed_EW_Test(){}
+void trafficYellow_EW_Test(){}
+void trafficGreen_EW_Test(){}
+
+/* Set bits for NORTH PEDESTRIAN lights */
+void pedestrianRed_N_Test(){}
+void pedestrianYellow_N_Test(){}
+void pedestrianGreen_N_Test(){}
+
+/* Set bits for West Pedestrian Lights */
+void pedestrianRed_W_Test(){}
+void pedestrianYellow_W_Test(){}
+void pedestrianGreen_W_Test(){}
 
 

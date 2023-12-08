@@ -24,4 +24,27 @@ void latchReg(){
 	HAL_GPIO_WritePin(IC595_STCP_GPIO_Port, IC595_STCP_Pin, GPIO_PIN_RESET);
 }
 
+/* Set bits for North and South Traffic Lights */
+void trafficRed_NS(){
+
+}
+void trafficYellow_NS(){}
+void trafficGreen_NS(){}
+
+/* Set bits for Eest and Wast Traffic Lights */
+void trafficRed_EW(){}
+void trafficYellow_EW(){}
+void trafficGreen_EW(){}
+
+/* Set bits for North Pedestrian Lights */
+void pedestrianRed_N(){}
+void pedestrianYellow_N(){}
+void pedestrianGreen_N(){}
+
+/* Set bits for West Pedestrian Lights */
+void pedestrianRed_W(){}
+void pedestrianYellow_W(){}
+void pedestrianGreen_W(){}
+
+
 
