@@ -27,11 +27,12 @@
 /* USER CODE BEGIN Includes */
 #include "semphr.h"
 #include "pro1_funct.h"
+#include "pro1_test.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+#define RUN_TEST_PROGRAM
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -46,6 +47,17 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
+// Required program delays, in ms.
+const TickType_t toggleFreq = pdMS_TO_TICKS(1000); // ms to ticks
+const TickType_t greenDelay = pdMS_TO_TICKS(8000);
+const TickType_t orangeDelay = pdMS_TO_TICKS(5000);
+const TickType_t redDelayMax = pdMS_TO_TICKS(100);
+const TickType_t pedestrianDelay = pdMS_TO_TICKS(100);
+
+extern uint8_t statusTraffic_NS;
+extern uint8_t statusTraffic_EW;
+extern uint8_t statusPedestrian_N;
+extern uint8_t statusPedestrian_W;
 
 /* USER CODE END Variables */
 /* Definitions for idleTask */
@@ -53,7 +65,7 @@ osThreadId_t idleTaskHandle;
 const osThreadAttr_t idleTask_attributes = {
   .name = "idleTask",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
+  .priority = (osPriority_t) osPriorityHigh7,
 };
 /* Definitions for pedestrianTask */
 osThreadId_t pedestrianTaskHandle;
@@ -140,7 +152,20 @@ void StartIdle(void *argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+	  #ifdef RUN_TEST_PROGRAM
+	  if (statusTraffic_NS == 1) {
+		  disableTraffic_NS_Test();
+		  activateTraffic_EW_Test();
+		  vTaskDelay( greenDelay );
+	  } else {
+		  disableTraffic_EW_Test();
+		  activateTraffic_NS_Test();
+		  vTaskDelay( greenDelay );
+	  };
+	  #else
+	  // Do real stuff
+	  #endif
+	  osDelay(1);
   }
   /* USER CODE END StartIdle */
 }

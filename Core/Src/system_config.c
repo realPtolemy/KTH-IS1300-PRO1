@@ -22,13 +22,10 @@
  *
  */
 uint8_t REG[3] = {0x00, 0x00, 0x00};
-
-// Required program delays, in ms.
-static uint16_t greenDelay = 100;
-static uint16_t orangeDelay = 100;
-static uint16_t redDelayMax = 100;
-static uint16_t pedestrianDelay = 100;
-static uint16_t toggleFreq = 100;
+uint8_t statusTraffic_NS = 1;
+uint8_t statusTraffic_EW = 0;
+uint8_t statusPedestrian_N = 0;
+uint8_t statusPedestrian_W = 1;
 
 // Set all LEDs to their initial stage
 void system_init(){
@@ -43,5 +40,7 @@ void system_init(){
 
 	stageReg();  // Stage the newly set bits to the shift register
 	latchReg();  // Latch the staged bits to shift register storage for output
+
+	HAL_Delay(5000);
 }
 

@@ -4,6 +4,7 @@
  *  Created on: Dec 4, 2023
  *      Author: Love MItteregger
  */
+#include "stdint.h"
 
 #ifndef INC_SRC_TEST_LED_H_
 #define INC_SRC_TEST_LED_H_
@@ -23,31 +24,29 @@ void pedestrianSwitch_Test_W(void);
 void init_Test(void);
 
 // Enhanced shift register bit staging and latching
+void setReg_Test(void);
 void stageReg_Test(void);
 void latchReg_Test(void);
 void activateLED_Test(void);
 void activateMultiLED_Test(void);
-
-/* Change NORTH & SOUTH TRAFFIC lights */
-void traffic_NS_Test(int status);
 void trafficRed_NS_Test(void);
-void trafficYellow_NS_Test(void);
-void trafficGreen_NS_Test(void);
 
-/* Set bits for EAST & WEST TRAFFIC lights */
-void trafficRed_EW_Test(void);
-void trafficYellow_EW_Test(void);
-void trafficGreen_EW_Test(void);
+// Set traffic lights
+void traffic_NS_Test(uint8_t status);
+void traffic_EW_Test(uint8_t status);
+void pedestrian_N_Test(uint8_t status);
+void pedestrian_W_Test(uint8_t status);
+void pedestrianPending_N_Test(void);
+void pedestrianPending_W_Test(void);
 
-/* Set bits for NORTH PEDESTRIAN lights */
-void pedestrianRed_N_Test(void);
-void pedestrianYellow_N_Test(void);
-void pedestrianGreen_N_Test(void);
-
-/* Set bits for West Pedestrian Lights */
-void pedestrianRed_W_Test(void);
-void pedestrianYellow_W_Test(void);
-void pedestrianGreen_W_Test(void);
-
+// Activate and dissable traffic or pedestrian crossings
+void activateTraffic_NS_Test(void);
+void disableTraffic_NS_Test(void);
+void activateTraffic_EW_Test(void);
+void disableTraffic_EW_Test(void);
+void activatePedestrian_N_Test(void);
+void disablePedestrian_N_Test(void);
+void activatePedestrian_W_Test(void);
+void disablePedestrian_W_Test(void);
 
 #endif /* INC_SRC_TEST_LED_H_ */
