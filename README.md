@@ -77,21 +77,21 @@ IS1300 - Traffic Signal Handling Project
 : TL1_Red       -   LED1					-	0x01 (0000 0001)	- First Shift Register					  :
 : TL1_Yellow    -   LED2					-	0x02 (0000 0010)	- First Shift Register					  :
 : TL1_Green     -   LED3					-	0x04 (0000 0100)	- First Shift Register					  :
-: TL2_Red       -   LED4					-	0x01 (0000 0001)	- First Shift Register					  :
-: TL2_Yellow    -   LED5					-	0x02 (0000 0010)	- First Shift Register					  :
-: TL2_Green     -   LED6					-	0x04 (0000 0100)	- First Shift Register					  :
-: TL3_Red       -   LED7					-	0x01 (0000 0001)	- First Shift Register					  :
-: TL3_Yellow    -   LED8					-	0x02 (0000 0010)	- First Shift Register					  :
-: TL3_Green     -   LED9					-	0x04 (0000 0100)	- First Shift Register					  :
+: TL2_Red       -   LED4					-	0x01 (0000 0001)	- Second Shift Register					  :
+: TL2_Yellow    -   LED5					-	0x02 (0000 0010)	- Second Shift Register					  :
+: TL2_Green     -   LED6					-	0x04 (0000 0100)	- Second Shift Register					  :
+: TL3_Red       -   LED7					-	0x01 (0000 0001)	- Third Shift Register					  :
+: TL3_Yellow    -   LED8					-	0x02 (0000 0010)	- Third Shift Register					  :
+: TL3_Green     -   LED9					-	0x04 (0000 0100)	- Third Shift Register					  :
 : TL4_Red       -   LED10					-	0x08 (0000 1000)	- Third Shift Register					  :
 : TL4_Yellow    -   LED11					-	0x10 (0001 0000)	- Third Shift Register					  :
 : TL4_Green     -   LED12					-	0x20 (0010 0000)	- Third Shift Register					  :
-: PL1_Red       -   LED13 & LED14                                                                             :
-: PL1_Green     -   LED15 & LED16                                                                             :
-: PL1_Blue      -   LED17 & LED18                                                                             :
-: PL2_Red       -   LED19 & LED20                                                                             :
-: PL2_Green     -   LED21 & LED22                                                                             :
-: PL2_Blue      -   LED23 & LED24                                                                             :
+: PL1_Red       -   LED13 & LED14			-	0x08 (0000 1000)	- First Shift Register					  :
+: PL1_Green     -   LED15 & LED16			-	0x10 (0001 0000)	- First Shift Register					  :
+: PL1_Blue      -   LED17 & LED18			-	0x20 (0010 0000)	- First Shift Register					  :
+: PL2_Red       -   LED19 & LED20			-	0x08 (0000 1000)	- Second Shift Register					  :
+: PL2_Green     -   LED21 & LED22			-	0x10 (0001 0000)	- Second Shift Register					  :
+: PL2_Blue      -   LED23 & LED24			-	0x20 (0010 0000)	- Second Shift Register					  :
 :-------------------------------------------------------------------------------------------------------------:
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 

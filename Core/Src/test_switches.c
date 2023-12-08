@@ -4,11 +4,11 @@
  *  Created on: Dec 4, 2023
  *      Author: Love Mitteregger
  */
+#include "pro1_funct.h"
+#include "pro1_test.h"
 #include "main.h"
 #include "spi.h"
 #include "gpio.h"
-#include "test_switches.h"
-#include "test_led.h"
 
 void trafficSwitch_Test_NS() {
 	// Read the state of the switches
