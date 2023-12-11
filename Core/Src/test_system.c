@@ -73,6 +73,7 @@ void disableTraffic_NS_Test() {
 		pedestrianWarning_W_Test();
 		endTime = xTaskGetTickCount();
 		elapsedTime = endTime -  startTime;
+		vTaskDelay( toggleFreq );
 	}
 	elapsedTime = 0;
 	pedestrian_W_Test(2);
@@ -91,8 +92,15 @@ void activateTraffic_EW_Test() {
 
 void disableTraffic_EW_Test() {
 	traffic_EW_Test(1);
+	startTime = xTaskGetTickCount();
 	traffic_EW_Test(2);
-	vTaskDelay( orangeDelay );
+	while (elapsedTime < orangeDelay ) {
+		pedestrianWarning_N_Test();
+		endTime = xTaskGetTickCount();
+		elapsedTime = endTime -  startTime;
+		vTaskDelay( toggleFreq );
+	}
+	elapsedTime = 0;
 	pedestrian_N_Test(2);
 	traffic_EW_Test(3);
 	statusTraffic_EW = 0;

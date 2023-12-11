@@ -49,10 +49,10 @@
 /* USER CODE BEGIN Variables */
 // Required program delays, in ms.
 #ifdef RUN_TEST_PROGRAM
-const TickType_t toggleFreq = pdMS_TO_TICKS(1000); // ms to ticks
+const TickType_t toggleFreq = pdMS_TO_TICKS(250); // ms to ticks
 const TickType_t pedestrianDelay = pdMS_TO_TICKS(100);
-const TickType_t safetyDelay = pdMS_TO_TICKS(2000);
-const TickType_t greenDelay = pdMS_TO_TICKS(8000);
+const TickType_t safetyDelay = pdMS_TO_TICKS(10000);
+const TickType_t greenDelay = pdMS_TO_TICKS(17000); // Real life ~470000ms
 const TickType_t orangeDelay = pdMS_TO_TICKS(5000);
 const TickType_t redDelayMax = pdMS_TO_TICKS(100);
 TickType_t startTime;

@@ -244,6 +244,13 @@ void pedestrian_W_Test(uint8_t status){
 }
 
 void pedestrianWarning_N_Test(){
+	togglePedestrianGreen = REG[1] & 0b010000; // Mask the pedestrian bit
+	if(togglePedestrianGreen) {
+		REG[1] = REG[1] & 0b101111; // Set NORTH pedestrian light bit to GREEN
+	} else {
+		REG[1] = REG[1] | 0b010000; // Set NORTH pedestrian light bit to GREEN
+	}
+	setReg_Test();
 }
 
 void pedestrianWarning_W_Test(){
@@ -259,7 +266,8 @@ void pedestrianWarning_W_Test(){
 /* Activate NORTH PEDESTRIAN BLUE lights */
 void pedestrianPending_N_Test(){
 	// Start by masking and storing the state of all other lights
-	if (REG[1] >= 0b100000) {
+	togglePedestrianBlue = REG[1] & 0b100000;
+	if (togglePedestrianBlue) {
 		REG[1] = REG[1] & 0b011111;
 	} else {
 		REG[1] = REG[1] | 0b100000;
@@ -269,7 +277,8 @@ void pedestrianPending_N_Test(){
 /* Activate WEST PEDESTRIAN BLUE lights */
 void pedestrianPending_W_Test(){
 	// Start by masking and storing the state of all other lights
-	if (REG[0] >= 0b100000) {
+	togglePedestrianBlue = REG[0] & 0b100000;
+	if (togglePedestrianBlue) {
 		REG[0] = REG[0] & 0b011111;
 	} else {
 		REG[0] = REG[0] | 0b100000;
