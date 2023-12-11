@@ -36,6 +36,8 @@ void traffic_NS_Test(uint8_t status);
 void traffic_EW_Test(uint8_t status);
 void pedestrian_N_Test(uint8_t status);
 void pedestrian_W_Test(uint8_t status);
+void pedestrianWarning_N_Test(void);
+void pedestrianWarning_W_Test(void);
 void pedestrianPending_N_Test(void);
 void pedestrianPending_W_Test(void);
 

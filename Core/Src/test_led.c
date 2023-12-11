@@ -12,6 +12,9 @@
 #include "usart.h"
 #include "gpio.h"
 
+extern uint8_t togglePedestrianGreen;
+extern uint8_t togglePedestrianBlue;
+
 
 // Test function for north and south traffic lights
 void trafficLED_Test_NS() {
@@ -236,6 +239,19 @@ void pedestrian_W_Test(uint8_t status){
 			// Bitwise-OR merge masked current states with new states for WEST pedestrian and WEST traffic lights
 			REG[0] = REG[0] | 0b001000; // Set WEST pedestrian light bit to RED
 			break;
+	}
+	setReg_Test();
+}
+
+void pedestrianWarning_N_Test(){
+}
+
+void pedestrianWarning_W_Test(){
+	togglePedestrianGreen = REG[0] & 0b010000; // Mask the pedestrian bit
+	if(togglePedestrianGreen) {
+		REG[0] = REG[0] & 0b101111; // Set NORTH pedestrian light bit to GREEN
+	} else {
+		REG[0] = REG[0] | 0b010000; // Set NORTH pedestrian light bit to GREEN
 	}
 	setReg_Test();
 }
