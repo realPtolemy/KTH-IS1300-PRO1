@@ -32,7 +32,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-#define RUN_TEST_PROGRAM
+//#define RUN_TEST_PROGRAM
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -47,8 +47,9 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
-// Required program delays, in ms.
+
 #ifdef RUN_TEST_PROGRAM
+// Required program delays, in ms.
 const TickType_t toggleFreq = pdMS_TO_TICKS(250); // ms to ticks
 const TickType_t pedestrianDelay = pdMS_TO_TICKS(100);
 const TickType_t safetyDelay = pdMS_TO_TICKS(10000);
@@ -63,11 +64,21 @@ extern uint8_t statusTraffic_NS;
 extern uint8_t statusTraffic_EW;
 extern uint8_t statusPedestrian_N;
 extern uint8_t statusPedestrian_W;
-
-uint8_t togglePedestrianGreen;
-uint8_t togglePedestrianBlue;
 #else
-// Do real stuff
+const TickType_t toggleFreq = pdMS_TO_TICKS(250); // ms to ticks
+const TickType_t pedestrianDelay = pdMS_TO_TICKS(100);
+const TickType_t safetyDelay = pdMS_TO_TICKS(10000);
+const TickType_t greenDelay = pdMS_TO_TICKS(17000); // Real life ~470000ms
+const TickType_t orangeDelay = pdMS_TO_TICKS(5000);
+const TickType_t redDelayMax = pdMS_TO_TICKS(100);
+TickType_t startTime;
+TickType_t endTime;
+TickType_t elapsedTime;
+
+extern uint8_t statusTraffic_NS;
+extern uint8_t statusTraffic_EW;
+extern uint8_t statusPedestrian_N;
+extern uint8_t statusPedestrian_W;
 #endif
 /* USER CODE END Variables */
 /* Definitions for idleTask */
@@ -175,7 +186,17 @@ void StartIdle(void *argument)
 		  vTaskDelay( greenDelay );
 	  };
 	  #else
-	  // Do real stuff
+	  if (statusTraffic_NS == 1) {
+		  disableTraffic_NS_Test();
+		  vTaskDelay( safetyDelay );
+		  activateTraffic_EW_Test();
+		  vTaskDelay( greenDelay );
+	  } else {
+		  disableTraffic_EW_Test();
+		  vTaskDelay (safetyDelay );
+		  activateTraffic_NS_Test();
+		  vTaskDelay( greenDelay );
+	  };
 	  #endif
 	  osDelay(1);
   }

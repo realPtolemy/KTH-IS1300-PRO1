@@ -12,8 +12,8 @@
 #include "usart.h"
 #include "gpio.h"
 
-extern uint8_t togglePedestrianGreen;
-extern uint8_t togglePedestrianBlue;
+uint8_t togglePedestrianGreen;
+uint8_t togglePedestrianBlue;
 
 
 // Test function for north and south traffic lights

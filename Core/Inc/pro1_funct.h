@@ -20,8 +20,17 @@ void traffic_NS(uint8_t status);
 void traffic_EW(uint8_t status);
 void pedestrian_N(uint8_t status);
 void pedestrian_W(uint8_t status);
+void pedestrianWarning_N(void);
+void pedestrianWarning_W(void);
 void pedestrianPending_N(void);
 void pedestrianPending_W(void);
+
+// Traffic logic
+void activateTraffic_NS(void);
+void disableTraffic_NS(void);
+void activateTraffic_EW(void);
+void disableTraffic_EW(void);
+
 
 // Tasks
 
