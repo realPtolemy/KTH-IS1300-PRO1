@@ -1,20 +1,20 @@
 /* USER CODE BEGIN Header */
 /**
-  ******************************************************************************
-  * File Name          : freertos.c
-  * Description        : Code for freertos applications
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2023 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * File Name          : freertos.c
+ * Description        : Code for freertos applications
+ ******************************************************************************
+ * @attention
+ *
+ * Copyright (c) 2023 STMicroelectronics.
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ * If no LICENSE file comes with this software, it is provided AS-IS.
+ *
+ ******************************************************************************
+ */
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
@@ -33,6 +33,9 @@
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 //#define RUN_TEST_PROGRAM
+//#define RUN_TEST_IDLE
+#define RUN_TEST_PEDESTRIAN
+#define RUN_TEST_TRAFFIC
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -52,10 +55,11 @@
 // Required program delays, in ms.
 const TickType_t toggleFreq = pdMS_TO_TICKS(250); // ms to ticks
 const TickType_t pedestrianDelay = pdMS_TO_TICKS(100);
-const TickType_t safetyDelay = pdMS_TO_TICKS(10000);
+const TickType_t safetyDelay = pdMS_TO_TICKS(6000);
 const TickType_t greenDelay = pdMS_TO_TICKS(17000); // Real life ~470000ms
 const TickType_t orangeDelay = pdMS_TO_TICKS(5000);
 const TickType_t redDelayMax = pdMS_TO_TICKS(100);
+
 TickType_t startTime;
 TickType_t endTime;
 TickType_t elapsedTime;
@@ -64,13 +68,16 @@ extern uint8_t statusTraffic_NS;
 extern uint8_t statusTraffic_EW;
 extern uint8_t statusPedestrian_N;
 extern uint8_t statusPedestrian_W;
+
 #else
+
 const TickType_t toggleFreq = pdMS_TO_TICKS(250); // ms to ticks
 const TickType_t pedestrianDelay = pdMS_TO_TICKS(100);
-const TickType_t safetyDelay = pdMS_TO_TICKS(10000);
+const TickType_t safetyDelay = pdMS_TO_TICKS(6000);
 const TickType_t greenDelay = pdMS_TO_TICKS(17000); // Real life ~470000ms
 const TickType_t orangeDelay = pdMS_TO_TICKS(5000);
 const TickType_t redDelayMax = pdMS_TO_TICKS(100);
+
 TickType_t startTime;
 TickType_t endTime;
 TickType_t elapsedTime;
@@ -86,21 +93,21 @@ osThreadId_t idleTaskHandle;
 const osThreadAttr_t idleTask_attributes = {
   .name = "idleTask",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityHigh7,
+  .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for pedestrianTask */
 osThreadId_t pedestrianTaskHandle;
 const osThreadAttr_t pedestrianTask_attributes = {
   .name = "pedestrianTask",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityHigh,
+  .priority = (osPriority_t) osPriorityRealtime,
 };
 /* Definitions for trafficTask */
 osThreadId_t trafficTaskHandle;
 const osThreadAttr_t trafficTask_attributes = {
   .name = "trafficTask",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityAboveNormal,
+  .priority = (osPriority_t) osPriorityHigh,
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -125,19 +132,19 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE END Init */
 
   /* USER CODE BEGIN RTOS_MUTEX */
-  /* add mutexes, ... */
+	/* add mutexes, ... */
   /* USER CODE END RTOS_MUTEX */
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
-  /* add semaphores, ... */
+	/* add semaphores, ... */
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* USER CODE BEGIN RTOS_TIMERS */
-  /* start timers, add new ones, ... */
+	/* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
 
   /* USER CODE BEGIN RTOS_QUEUES */
-  /* add queues, ... */
+	/* add queues, ... */
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
@@ -151,91 +158,99 @@ void MX_FREERTOS_Init(void) {
   trafficTaskHandle = osThreadNew(StartTraffic, NULL, &trafficTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
-  /* add threads, ... */
+	/* add threads, ... */
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
-  /* add events, ... */
+	/* add events, ... */
   /* USER CODE END RTOS_EVENTS */
 
 }
 
 /* USER CODE BEGIN Header_StartIdle */
 /**
-  * @brief  Function implementing the idleTask thread.
-  * @param  argument: Not used
-  * @retval None
-  */
+ * @brief  Function implementing the idleTask thread.
+ * @param  argument: Not used
+ * @retval None
+ */
 /* USER CODE END Header_StartIdle */
 void StartIdle(void *argument)
 {
   /* USER CODE BEGIN StartIdle */
-  /* Infinite loop */
-  for(;;)
-  {
-	  #ifdef RUN_TEST_PROGRAM
-	  if (statusTraffic_NS == 1) {
-		  disableTraffic_NS_Test();
-		  vTaskDelay( safetyDelay );
-		  activateTraffic_EW_Test();
-		  vTaskDelay( greenDelay );
-	  } else {
-		  disableTraffic_EW_Test();
-		  vTaskDelay (safetyDelay );
-		  activateTraffic_NS_Test();
-		  vTaskDelay( greenDelay );
-	  };
-	  #else
-	  if (statusTraffic_NS == 1) {
-		  disableTraffic_NS_Test();
-		  vTaskDelay( safetyDelay );
-		  activateTraffic_EW_Test();
-		  vTaskDelay( greenDelay );
-	  } else {
-		  disableTraffic_EW_Test();
-		  vTaskDelay (safetyDelay );
-		  activateTraffic_NS_Test();
-		  vTaskDelay( greenDelay );
-	  };
-	  #endif
-	  osDelay(1);
-  }
+	/* Infinite loop */
+	for(;;)
+	{
+#ifdef RUN_TEST_IDLE
+		if (statusTraffic_NS == 1) {
+			disableTraffic_NS_Test();
+			vTaskDelay( safetyDelay );
+			activateTraffic_EW_Test();
+			vTaskDelay( greenDelay );
+		} else {
+			disableTraffic_EW_Test();
+			vTaskDelay (safetyDelay );
+			activateTraffic_NS_Test();
+			vTaskDelay( greenDelay );
+		};
+#else
+		if (statusTraffic_NS == 1) {
+			disableTraffic_NS();
+			vTaskDelay( safetyDelay );
+			activateTraffic_EW();
+			vTaskDelay( greenDelay );
+		} else {
+			disableTraffic_EW();
+			vTaskDelay (safetyDelay );
+			activateTraffic_NS();
+			vTaskDelay( greenDelay );
+		};
+#endif
+		osDelay(1);
+	}
   /* USER CODE END StartIdle */
 }
 
 /* USER CODE BEGIN Header_StartPedestrian */
 /**
-* @brief Function implementing the pedestrianTask thread.
-* @param argument: Not used
-* @retval None
-*/
+ * @brief Function implementing the pedestrianTask thread.
+ * @param argument: Not used
+ * @retval None
+ */
 /* USER CODE END Header_StartPedestrian */
 void StartPedestrian(void *argument)
 {
   /* USER CODE BEGIN StartPedestrian */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
+
+#ifdef RUN_TEST_PEDESTRIAN
+#else
+	/* Infinite loop */
+
+	for(;;)
+	{
+		osDelay(1);
+	}
+#endif
   /* USER CODE END StartPedestrian */
 }
 
 /* USER CODE BEGIN Header_StartTraffic */
 /**
-* @brief Function implementing the trafficTask thread.
-* @param argument: Not used
-* @retval None
-*/
+ * @brief Function implementing the trafficTask thread.
+ * @param argument: Not used
+ * @retval None
+ */
 /* USER CODE END Header_StartTraffic */
 void StartTraffic(void *argument)
 {
   /* USER CODE BEGIN StartTraffic */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
+#ifdef RUN_TEST_TRAFFIC
+#else
+	/* Infinite loop */
+	for(;;)
+	{
+		osDelay(1);
+	}
+#endif
   /* USER CODE END StartTraffic */
 }
 

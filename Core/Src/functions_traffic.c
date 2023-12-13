@@ -11,10 +11,11 @@
 #include "FreeRTOS.h"
 
 extern const TickType_t toggleFreq;
+extern const TickType_t pedestrianDelay;
+extern const TickType_t safetyDelay;
 extern const TickType_t greenDelay;
 extern const TickType_t orangeDelay;
 extern const TickType_t redDelayMax;
-extern const TickType_t pedestrianDelay;
 
 extern TickType_t startTime;
 extern TickType_t endTime;
@@ -37,7 +38,6 @@ void activateTraffic_NS() {
 void disableTraffic_NS() {
 	traffic_NS(1);
 	startTime = xTaskGetTickCount();
-	traffic_NS(2);
 	while (elapsedTime < orangeDelay ) {
 		pedestrianWarning_W();
 		endTime = xTaskGetTickCount();
@@ -46,6 +46,9 @@ void disableTraffic_NS() {
 	}
 	elapsedTime = 0;
 	pedestrian_W(2);
+	vTaskDelay( safetyDelay );
+	traffic_NS(2);
+	vTaskDelay( orangeDelay );
 	traffic_NS(3);
 	statusTraffic_NS = 0;
 }
@@ -62,7 +65,6 @@ void activateTraffic_EW() {
 void disableTraffic_EW() {
 	traffic_EW(1);
 	startTime = xTaskGetTickCount();
-	traffic_EW(2);
 	while (elapsedTime < orangeDelay ) {
 		pedestrianWarning_N();
 		endTime = xTaskGetTickCount();
@@ -71,6 +73,9 @@ void disableTraffic_EW() {
 	}
 	elapsedTime = 0;
 	pedestrian_N(2);
+	vTaskDelay( safetyDelay );
+	traffic_EW(2);
+	vTaskDelay( orangeDelay );
 	traffic_EW(3);
 	statusTraffic_EW = 0;
 }
