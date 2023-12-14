@@ -51,4 +51,7 @@ void disablePedestrian_N_Test(void);
 void activatePedestrian_W_Test(void);
 void disablePedestrian_W_Test(void);
 
+// Read traffic from switches
+uint8_t checkTraffic(void);
+
 #endif /* INC_SRC_TEST_LED_H_ */

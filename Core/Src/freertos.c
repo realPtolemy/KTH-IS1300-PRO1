@@ -32,9 +32,9 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-//#define RUN_TEST_PROGRAM
+#define RUN_TEST_PROGRAM
 //#define RUN_TEST_IDLE
-#define RUN_TEST_PEDESTRIAN
+//#define RUN_TEST_PEDESTRIAN
 #define RUN_TEST_TRAFFIC
 /* USER CODE END PTD */
 
@@ -55,10 +55,11 @@
 // Required program delays, in ms.
 const TickType_t toggleFreq = pdMS_TO_TICKS(250); // ms to ticks
 const TickType_t pedestrianDelay = pdMS_TO_TICKS(100);
-const TickType_t safetyDelay = pdMS_TO_TICKS(6000);
-const TickType_t greenDelay = pdMS_TO_TICKS(17000); // Real life ~470000ms
-const TickType_t orangeDelay = pdMS_TO_TICKS(5000);
+const TickType_t safetyDelay = pdMS_TO_TICKS(3000);
+const TickType_t greenDelay = pdMS_TO_TICKS(8000); // Real life ~470000ms
+const TickType_t orangeDelay = pdMS_TO_TICKS(2500);
 const TickType_t redDelayMax = pdMS_TO_TICKS(100);
+const TickType_t testingDelay = pdMS_TO_TICKS(1000); // ms to ticks
 
 TickType_t startTime;
 TickType_t endTime;
@@ -68,6 +69,14 @@ extern uint8_t statusTraffic_NS;
 extern uint8_t statusTraffic_EW;
 extern uint8_t statusPedestrian_N;
 extern uint8_t statusPedestrian_W;
+
+volatile uint8_t statusVehicle_N = 0;
+volatile uint8_t statusVehicle_S = 0;
+volatile uint8_t statusVehicle_E = 0;
+volatile uint8_t statusVehicle_W = 0;
+uint8_t pendingTraffic = 0;
+
+uint8_t testVar = 2;
 
 #else
 
@@ -109,6 +118,11 @@ const osThreadAttr_t trafficTask_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityHigh,
 };
+/* Definitions for mutex */
+osMutexId_t mutexHandle;
+const osMutexAttr_t mutex_attributes = {
+  .name = "mutex"
+};
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -130,6 +144,9 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
 
   /* USER CODE END Init */
+  /* Create the mutex(es) */
+  /* creation of mutex */
+  mutexHandle = osMutexNew(&mutex_attributes);
 
   /* USER CODE BEGIN RTOS_MUTEX */
 	/* add mutexes, ... */
@@ -176,38 +193,53 @@ void MX_FREERTOS_Init(void) {
 /* USER CODE END Header_StartIdle */
 void StartIdle(void *argument)
 {
-  /* USER CODE BEGIN StartIdle */
+	/* USER CODE BEGIN StartIdle */
 	/* Infinite loop */
-	for(;;)
+	while(1)
 	{
+		if( !pendingTraffic ) {
+			osDelay(testingDelay);
 #ifdef RUN_TEST_IDLE
-		if (statusTraffic_NS == 1) {
-			disableTraffic_NS_Test();
-			vTaskDelay( safetyDelay );
-			activateTraffic_EW_Test();
-			vTaskDelay( greenDelay );
-		} else {
-			disableTraffic_EW_Test();
-			vTaskDelay (safetyDelay );
-			activateTraffic_NS_Test();
-			vTaskDelay( greenDelay );
-		};
+			xSemaphoreTake(mutexHandle, 0);
+			if (statusTraffic_NS == 1) {
+				disableTraffic_NS_Test();
+				vTaskDelay( safetyDelay );
+				activateTraffic_EW_Test();
+				vTaskDelay( greenDelay );
+			} else {
+				disableTraffic_EW_Test();
+				vTaskDelay (safetyDelay );
+				activateTraffic_NS_Test();
+				vTaskDelay( greenDelay );
+			};
+			xSemaphoreGive(mutexHandle);
 #else
-		if (statusTraffic_NS == 1) {
-			disableTraffic_NS();
-			vTaskDelay( safetyDelay );
-			activateTraffic_EW();
-			vTaskDelay( greenDelay );
-		} else {
-			disableTraffic_EW();
-			vTaskDelay (safetyDelay );
-			activateTraffic_NS();
-			vTaskDelay( greenDelay );
-		};
+			xSemaphoreTake(mutexHandle, portMAX_DELAY);
+			if (statusTraffic_NS == 1) {
+				disableTraffic_NS();
+				vTaskDelay( safetyDelay );
+				xSemaphoreGive(mutexHandle);
+				vTaskDelay(1000);
+				xSemaphoreTake(mutexHandle, portMAX_DELAY);
+				pedestrianPending_N_Test();
+				activateTraffic_EW();
+				vTaskDelay( greenDelay );
+			} else {
+				disableTraffic_EW();
+				vTaskDelay (safetyDelay );
+				xSemaphoreGive(mutexHandle);
+				vTaskDelay(1000);
+				xSemaphoreTake(mutexHandle, portMAX_DELAY);
+				pedestrianPending_N_Test();
+				activateTraffic_NS();
+				vTaskDelay( greenDelay );
+			}
+			xSemaphoreGive(mutexHandle);
+		}
 #endif
 		osDelay(1);
 	}
-  /* USER CODE END StartIdle */
+	/* USER CODE END StartIdle */
 }
 
 /* USER CODE BEGIN Header_StartPedestrian */
@@ -220,16 +252,23 @@ void StartIdle(void *argument)
 void StartPedestrian(void *argument)
 {
   /* USER CODE BEGIN StartPedestrian */
-
-#ifdef RUN_TEST_PEDESTRIAN
-#else
 	/* Infinite loop */
-
 	for(;;)
 	{
+#ifdef RUN_TEST_PEDESTRIAN
+	if ( testVar == 1 ) {
+		xSemaphoreTake(pedestrianMutexHandle, 0);
+		traffic_NS_Test(2);
+		traffic_EW_Test(2);
+		pedestrianPending_N_Test();
+		pedestrianPending_W_Test();
+		vTaskDelay( testingDelay );
+		xSemaphoreGive( pedestrianMutexHandle );
+	}
+#else
+#endif
 		osDelay(1);
 	}
-#endif
   /* USER CODE END StartPedestrian */
 }
 
@@ -243,14 +282,33 @@ void StartPedestrian(void *argument)
 void StartTraffic(void *argument)
 {
   /* USER CODE BEGIN StartTraffic */
-#ifdef RUN_TEST_TRAFFIC
-#else
 	/* Infinite loop */
-	for(;;)
+	while(1)
 	{
+#ifdef RUN_TEST_TRAFFIC
+	pendingTraffic = checkTraffic();
+	while ( pendingTraffic ) {
+		xSemaphoreTake(mutexHandle, portMAX_DELAY);
+		//pedestrianPending_N_Test();
+		if ( (statusTraffic_NS && !statusTraffic_EW) && (statusVehicle_N || statusVehicle_S) ) {
+			traffic_NS_Test(1);
+			pedestrian_W_Test(1);
+		} else if ( (!statusTraffic_NS && !statusTraffic_EW) && (statusVehicle_N || statusVehicle_S)) {
+			activateTraffic_NS();
+		} else if ( (!statusTraffic_NS && statusTraffic_EW) && (statusVehicle_E || statusVehicle_W) ) {
+			traffic_EW_Test(1);
+			pedestrian_N_Test(1);
+		} else if ( (!statusTraffic_NS && !statusTraffic_EW) && (statusVehicle_E || statusVehicle_W )) {
+			activateTraffic_EW();
+			//pedestrianPending_N_Test();
+		}
+		//vTaskDelay( testingDelay );
+		xSemaphoreGive(mutexHandle);
+	}
+#else
+#endif
 		osDelay(1);
 	}
-#endif
   /* USER CODE END StartTraffic */
 }
 
