@@ -22,10 +22,6 @@
  *
  */
 uint8_t REG[3] = {0x00, 0x00, 0x00};
-uint8_t statusTraffic_NS = 1;
-uint8_t statusTraffic_EW = 0;
-uint8_t statusPedestrian_N = 0;
-uint8_t statusPedestrian_W = 1;
 
 // Set all LEDs to their initial stage
 void system_init(){

@@ -66,10 +66,10 @@ TickType_t startTime;
 TickType_t endTime;
 TickType_t elapsedTime;
 
-extern uint8_t statusTraffic_NS;
-extern uint8_t statusTraffic_EW;
-extern uint8_t statusPedestrian_N;
-extern uint8_t statusPedestrian_W;
+volatile uint8_t statusTraffic_NS = 1;
+volatile uint8_t statusTraffic_EW = 0;
+volatile uint8_t statusPedestrian_N = 0;
+volatile uint8_t statusPedestrian_W = 1;
 
 volatile uint8_t statusVehicle_N = 0;
 volatile uint8_t statusVehicle_S = 0;
@@ -210,7 +210,7 @@ void StartIdle(void *argument)
 				vTaskDelay( testingDelay );
 				//pedestrianPending_N_Test();
 				//vTaskDelay(testingDelay);
-				xSemaphoreTake(mutexHandle, 0);
+				xSemaphoreTake(mutexHandle, portMAX_DELAY);
 				activateTraffic_EW();
 				vTaskDelay( greenDelay );
 				xSemaphoreGive(mutexHandle);
@@ -220,7 +220,7 @@ void StartIdle(void *argument)
 				vTaskDelay (safetyDelay );
 				xSemaphoreGive(mutexHandle);
 				vTaskDelay( testingDelay );
-				xSemaphoreTake(mutexHandle, 0);
+				xSemaphoreTake(mutexHandle, portMAX_DELAY);
 				activateTraffic_NS();
 				vTaskDelay( greenDelay );
 				xSemaphoreGive(mutexHandle);
@@ -291,27 +291,39 @@ void StartTraffic(void *argument)
 #ifdef RUN_TEST_TRAFFIC
 		pendingTraffic = checkTraffic();
 		if ( pendingTraffic ) {
-			//pedestrianPending_N_Test();
-			if ( (statusTraffic_NS && !statusTraffic_EW) && (statusVehicle_N || statusVehicle_S) ) {
+			if ( (!statusTraffic_NS && !statusTraffic_EW) && (statusVehicle_N || statusVehicle_S)) {
 				xSemaphoreTake(mutexHandle, portMAX_DELAY);
-				traffic_NS_Test(1);
-				pedestrian_W_Test(1);
-				pedestrianPending_W_Test();
+				activateTraffic_NS_Test();
+				vTaskDelay(greenDelay);
+				checkTraffic();
+				if (statusVehicle_N || statusVehicle_S) {
+					staticTraffic_NS_Test();
+				} else {
+					disableTraffic_NS_Test();
+				}
 				xSemaphoreGive(mutexHandle);
-			} else if ( (!statusTraffic_NS && !statusTraffic_EW) && (statusVehicle_N || statusVehicle_S)) {
+
+		//	} else if ( (statusTraffic_NS && !statusTraffic_EW) && (statusVehicle_N || statusVehicle_S) ) {
+		//		xSemaphoreTake(mutexHandle, portMAX_DELAY);
+		//		pedestrianPending_N_Test();
+		//		staticTraffic_NS_Test();
+		//		xSemaphoreGive(mutexHandle);
+			} else if ( (!statusTraffic_NS && statusTraffic_EW) && (statusVehicle_N || statusVehicle_S) ) {
 				xSemaphoreTake(mutexHandle, portMAX_DELAY);
-				activateTraffic_NS();
+				disableTraffic_EW();
+				vTaskDelay (safetyDelay );
+				activateTraffic_NS_Test();
 				xSemaphoreGive(mutexHandle);
 			} else if ( (!statusTraffic_NS && statusTraffic_EW) && (statusVehicle_E || statusVehicle_W) ) {
-				xSemaphoreTake(mutexHandle, portMAX_DELAY);
+				//xSemaphoreTake(mutexHandle, portMAX_DELAY);
 				traffic_EW_Test(1);
 				pedestrian_N_Test(1);
 				pedestrianPending_W_Test();
-				xSemaphoreGive(mutexHandle);
+				//xSemaphoreGive(mutexHandle);
 			} else if ( (!statusTraffic_NS && !statusTraffic_EW) && (statusVehicle_E || statusVehicle_W )) {
-				xSemaphoreTake(mutexHandle, portMAX_DELAY);
+				//xSemaphoreTake(mutexHandle, portMAX_DELAY);
 				activateTraffic_EW();
-				xSemaphoreGive(mutexHandle);
+				//xSemaphoreGive(mutexHandle);
 				//pedestrianPending_N_Test();
 			}
 		}

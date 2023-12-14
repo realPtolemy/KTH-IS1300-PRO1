@@ -50,6 +50,8 @@ void activatePedestrian_N_Test(void);
 void disablePedestrian_N_Test(void);
 void activatePedestrian_W_Test(void);
 void disablePedestrian_W_Test(void);
+void staticTraffic_NS_Test(void);
+void staticTraffic_EW_Test(void);
 
 // Read traffic from switches
 uint8_t checkTraffic(void);

@@ -30,6 +30,11 @@ extern uint8_t statusTraffic_EW;
 extern uint8_t statusPedestrian_N;
 extern uint8_t statusPedestrian_W;
 
+extern uint8_t statusVehicle_N;
+extern uint8_t statusVehicle_S;
+extern uint8_t statusVehicle_E;
+extern uint8_t statusVehicle_W;
+
 
 
 void init_Test(){
@@ -96,6 +101,22 @@ void disableTraffic_EW_Test() {
 	pedestrian_N_Test(2);
 	traffic_EW_Test(3);
 	statusTraffic_EW = 0;
+}
+
+void staticTraffic_NS_Test(){
+	while(statusVehicle_N || statusVehicle_S) {
+		traffic_NS_Test(1);
+		pedestrian_W_Test(1);
+		pedestrianPending_W_Test();
+	}
+}
+
+void staticTraffic_EW_Test(){
+	while(statusVehicle_E || statusVehicle_W) {
+		traffic_EW_Test(1);
+		pedestrian_N_Test(1);
+		pedestrianPending_N_Test();
+	}
 }
 
 void activatePedestrian_N_Test(){
