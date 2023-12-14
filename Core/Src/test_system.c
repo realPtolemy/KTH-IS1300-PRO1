@@ -107,7 +107,7 @@ void staticTraffic_NS_Test(){
 	while(statusVehicle_N || statusVehicle_S) {
 		traffic_NS_Test(1);
 		pedestrian_W_Test(1);
-		pedestrianPending_W_Test();
+		checkTraffic();
 	}
 }
 
@@ -115,7 +115,7 @@ void staticTraffic_EW_Test(){
 	while(statusVehicle_E || statusVehicle_W) {
 		traffic_EW_Test(1);
 		pedestrian_N_Test(1);
-		pedestrianPending_N_Test();
+		checkTraffic();
 	}
 }
 

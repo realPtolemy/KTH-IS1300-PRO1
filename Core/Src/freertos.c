@@ -207,12 +207,10 @@ void StartIdle(void *argument)
 				disableTraffic_NS();
 				vTaskDelay( safetyDelay );
 				xSemaphoreGive(mutexHandle);
-				vTaskDelay( testingDelay );
-				//pedestrianPending_N_Test();
-				//vTaskDelay(testingDelay);
+				vTaskDelay(testingDelay);
 				xSemaphoreTake(mutexHandle, portMAX_DELAY);
 				activateTraffic_EW();
-				vTaskDelay( greenDelay );
+				vTaskDelay(greenDelay);
 				xSemaphoreGive(mutexHandle);
 			} else {
 				xSemaphoreTake(mutexHandle, 0);
@@ -222,7 +220,7 @@ void StartIdle(void *argument)
 				vTaskDelay( testingDelay );
 				xSemaphoreTake(mutexHandle, portMAX_DELAY);
 				activateTraffic_NS();
-				vTaskDelay( greenDelay );
+				vTaskDelay(greenDelay);
 				xSemaphoreGive(mutexHandle);
 			}
 			vTaskDelay(testingDelay);
@@ -293,15 +291,16 @@ void StartTraffic(void *argument)
 		if ( pendingTraffic ) {
 			if ( (!statusTraffic_NS && !statusTraffic_EW) && (statusVehicle_N || statusVehicle_S)) {
 				xSemaphoreTake(mutexHandle, portMAX_DELAY);
-				activateTraffic_NS_Test();
+				activateTraffic_NS();
 				vTaskDelay(greenDelay);
-				checkTraffic();
-				if (statusVehicle_N || statusVehicle_S) {
-					staticTraffic_NS_Test();
-				} else {
-					disableTraffic_NS_Test();
-				}
-				xSemaphoreGive(mutexHandle);
+				checkTraffic(); // DO NOT FORGET TO CHECK TRAFFIC!!!
+				// DO NOT FORGET TO CHECK TRAFFIC!!!
+				// DO NOT FORGET TO CHECK TRAFFIC!!!
+				// Works after checking traffic! :)
+				staticTraffic_NS();
+				// Enhance how this function works if N or S car is being activated as EW street turns red.
+				disableTraffic_NS();
+
 
 		//	} else if ( (statusTraffic_NS && !statusTraffic_EW) && (statusVehicle_N || statusVehicle_S) ) {
 		//		xSemaphoreTake(mutexHandle, portMAX_DELAY);

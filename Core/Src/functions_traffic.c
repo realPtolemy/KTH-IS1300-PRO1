@@ -26,6 +26,11 @@ extern uint8_t statusTraffic_EW;
 extern uint8_t statusPedestrian_N;
 extern uint8_t statusPedestrian_W;
 
+extern volatile uint8_t statusVehicle_N;
+extern volatile uint8_t statusVehicle_S;
+extern volatile uint8_t statusVehicle_E;
+extern volatile uint8_t statusVehicle_W;
+
 void activateTraffic_NS() {
 	traffic_NS(3);
 	traffic_NS(2);
@@ -80,3 +85,18 @@ void disableTraffic_EW() {
 	statusTraffic_EW = 0;
 }
 
+void staticTraffic_NS(){
+	while(statusVehicle_N || statusVehicle_S) {
+		traffic_NS_Test(1);
+		pedestrian_W_Test(1);
+		checkTraffic();
+	}
+}
+
+void staticTraffic_EW(){
+	while(statusVehicle_E || statusVehicle_W) {
+		traffic_EW_Test(1);
+		pedestrian_N_Test(1);
+		checkTraffic();
+	}
+}

@@ -26,10 +26,13 @@ void pedestrianPending_N(void);
 void pedestrianPending_W(void);
 
 // Traffic logic
+//void checkTraffic(void);
 void activateTraffic_NS(void);
 void disableTraffic_NS(void);
 void activateTraffic_EW(void);
 void disableTraffic_EW(void);
+void staticTraffic_NS(void);
+void staticTraffic_EW(void);
 
 
 // Tasks
