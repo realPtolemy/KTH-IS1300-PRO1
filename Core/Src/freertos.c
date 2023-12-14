@@ -197,23 +197,10 @@ void StartIdle(void *argument)
 	/* Infinite loop */
 	while(1)
 	{
+
+#ifdef RUN_TEST_IDLE
 		if( !pendingTraffic ) {
 			osDelay(testingDelay);
-#ifdef RUN_TEST_IDLE
-			xSemaphoreTake(mutexHandle, 0);
-			if (statusTraffic_NS == 1) {
-				disableTraffic_NS_Test();
-				vTaskDelay( safetyDelay );
-				activateTraffic_EW_Test();
-				vTaskDelay( greenDelay );
-			} else {
-				disableTraffic_EW_Test();
-				vTaskDelay (safetyDelay );
-				activateTraffic_NS_Test();
-				vTaskDelay( greenDelay );
-			};
-			xSemaphoreGive(mutexHandle);
-#else
 			xSemaphoreTake(mutexHandle, portMAX_DELAY);
 			if (statusTraffic_NS == 1) {
 				disableTraffic_NS();
@@ -236,6 +223,18 @@ void StartIdle(void *argument)
 			}
 			xSemaphoreGive(mutexHandle);
 		}
+#else
+			if (statusTraffic_NS == 1) {
+				disableTraffic_NS();
+				vTaskDelay( safetyDelay );
+				activateTraffic_EW();
+				vTaskDelay( greenDelay );
+			} else {
+				disableTraffic_EW();
+				vTaskDelay (safetyDelay );
+				activateTraffic_NS();
+				vTaskDelay( greenDelay );
+			}
 #endif
 		osDelay(1);
 	}
