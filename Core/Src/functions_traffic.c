@@ -56,6 +56,7 @@ void disableTraffic_NS() {
 	vTaskDelay( orangeDelay );
 	traffic_NS(3);
 	statusTraffic_NS = 0;
+	vTaskDelay(safetyDelay);
 }
 
 void activateTraffic_EW() {
@@ -83,10 +84,15 @@ void disableTraffic_EW() {
 	vTaskDelay( orangeDelay );
 	traffic_EW(3);
 	statusTraffic_EW = 0;
+	vTaskDelay(safetyDelay);
 }
 
 void staticTraffic_NS(){
 	while(statusVehicle_N || statusVehicle_S) {
+		if(statusVehicle_E || statusVehicle_W) {
+			vTaskDelay( redDelayMax );
+			break;
+		}
 		traffic_NS(1);
 		pedestrian_W(1);
 		checkTraffic();
@@ -95,6 +101,10 @@ void staticTraffic_NS(){
 
 void staticTraffic_EW(){
 	while(statusVehicle_E || statusVehicle_W) {
+		if(statusVehicle_N || statusVehicle_S) {
+			vTaskDelay( redDelayMax );
+			break;
+		}
 		traffic_EW(1);
 		pedestrian_N(1);
 		checkTraffic();

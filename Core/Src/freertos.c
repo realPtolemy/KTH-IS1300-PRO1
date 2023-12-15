@@ -58,9 +58,9 @@ const TickType_t pedestrianDelay = pdMS_TO_TICKS(100);
 const TickType_t safetyDelay = pdMS_TO_TICKS(3000);
 const TickType_t greenDelay = pdMS_TO_TICKS(8000); // Real life ~470000ms
 const TickType_t orangeDelay = pdMS_TO_TICKS(2500);
-const TickType_t redDelayMax = pdMS_TO_TICKS(100);
+const TickType_t redDelayMax = pdMS_TO_TICKS(500);
 const TickType_t testingDelay = pdMS_TO_TICKS(100); // ms to ticks
-const TickType_t testingDelay2 = pdMS_TO_TICKS(300); // ms to ticks
+const TickType_t testingDelay2 = pdMS_TO_TICKS(800); // ms to ticks
 
 TickType_t startTime;
 TickType_t endTime;
@@ -205,7 +205,6 @@ void StartIdle(void *argument)
 			if (statusTraffic_NS == 1) {
 				xSemaphoreTake(mutexHandle, 0);
 				disableTraffic_NS_Test();
-				//vTaskDelay( safetyDelay ); // Implemented in disableTraffic function
 				xSemaphoreGive(mutexHandle);
 				vTaskDelay(testingDelay);
 				xSemaphoreTake(mutexHandle, portMAX_DELAY);
@@ -215,7 +214,6 @@ void StartIdle(void *argument)
 			} else {
 				xSemaphoreTake(mutexHandle, 0);
 				disableTraffic_EW_Test();
-				//vTaskDelay( safetyDelay ); // Implemented in disableTraffic function
 				xSemaphoreGive(mutexHandle);
 				vTaskDelay( testingDelay );
 				xSemaphoreTake(mutexHandle, portMAX_DELAY);
@@ -289,41 +287,68 @@ void StartTraffic(void *argument)
 #ifdef RUN_TEST_TRAFFIC
 		pendingTraffic = checkTraffic();
 		if ( pendingTraffic ) {
-			if ( (!statusTraffic_NS && !statusTraffic_EW) && (statusVehicle_N || statusVehicle_S)) {
-				xSemaphoreTake(mutexHandle, portMAX_DELAY);
-				activateTraffic_NS();
+			xSemaphoreTake(mutexHandle, portMAX_DELAY);
+			if ( (!statusTraffic_NS && !statusTraffic_EW) && (statusVehicle_N || statusVehicle_S) && (!statusVehicle_E && !statusVehicle_W)) {
+				//xSemaphoreTake(mutexHandle, portMAX_DELAY);
+				activateTraffic_NS_Test();
 				vTaskDelay(greenDelay);
 				checkTraffic();
 				staticTraffic_NS_Test();
 				// Enhance how this function works if N or S car is being activated as EW street turns red.
 				disableTraffic_NS_Test();
-				xSemaphoreGive(mutexHandle);
-			} else if ( (!statusTraffic_NS && !statusTraffic_EW) && (statusVehicle_E || statusVehicle_W )) {
-				xSemaphoreTake(mutexHandle, portMAX_DELAY);
-				activateTraffic_EW();
+				//xSemaphoreGive(mutexHandle);
+			} else if ( (!statusTraffic_NS && !statusTraffic_EW) && (statusVehicle_E || statusVehicle_W ) && (!statusVehicle_N && !statusVehicle_S)) {
+				//xSemaphoreTake(mutexHandle, portMAX_DELAY);
+				activateTraffic_EW_Test();
 				vTaskDelay(greenDelay);
 				checkTraffic();
 				staticTraffic_EW_Test();
 				disableTraffic_EW_Test();
-				xSemaphoreGive(mutexHandle);
-		//	} else if ( (statusTraffic_NS && !statusTraffic_EW) && (statusVehicle_N || statusVehicle_S) ) {
-		//		xSemaphoreTake(mutexHandle, portMAX_DELAY);
-		//		pedestrianPending_N_Test();
-		//		staticTraffic_NS_Test();
-		//		xSemaphoreGive(mutexHandle);
-		//	} else if ( (!statusTraffic_NS && statusTraffic_EW) && (statusVehicle_N || statusVehicle_S) ) {
-		//		xSemaphoreTake(mutexHandle, portMAX_DELAY);
-		//		disableTraffic_EW();
-		//		vTaskDelay (safetyDelay );
-		//		activateTraffic_NS_Test();
-		//		xSemaphoreGive(mutexHandle);
-		//	} else if ( (!statusTraffic_NS && statusTraffic_EW) && (statusVehicle_E || statusVehicle_W) ) {
-		//		//xSemaphoreTake(mutexHandle, portMAX_DELAY);
-		//		traffic_EW_Test(1);
-		//		pedestrian_N_Test(1);
-		//		pedestrianPending_W_Test();
-		//		xSemaphoreGive(mutexHandle);
+				//xSemaphoreGive(mutexHandle);
+			} else if ( (statusTraffic_NS && !statusTraffic_EW) && (statusVehicle_N || statusVehicle_S) && (!statusVehicle_E && !statusVehicle_W)) {
+				//xSemaphoreTake(mutexHandle, portMAX_DELAY);
+				if (statusTraffic_NS == 1) {
+					staticTraffic_NS_Test();
+				} else {
+					activateTraffic_NS_Test();
+					staticTraffic_NS_Test();
+				}
+				//xSemaphoreGive(mutexHandle);
+			} else if ( (!statusTraffic_NS && statusTraffic_EW) && (statusVehicle_E || statusVehicle_W ) && (!statusVehicle_N && !statusVehicle_S)) {
+				//xSemaphoreTake(mutexHandle, portMAX_DELAY);
+				if (statusTraffic_EW == 1) {
+					staticTraffic_EW_Test();
+				} else {
+					activateTraffic_EW_Test();
+					staticTraffic_EW_Test();
+				}
+				//xSemaphoreGive(mutexHandle);
+			} else if ( (!statusTraffic_NS && statusTraffic_EW) && (statusVehicle_N || statusVehicle_S) && (!statusVehicle_E && !statusVehicle_W)) {
+				//xSemaphoreTake(mutexHandle, portMAX_DELAY);
+				disableTraffic_EW_Test();
+				activateTraffic_NS_Test();
+				//xSemaphoreGive(mutexHandle);
+			} else if ( (statusTraffic_NS && !statusTraffic_EW) && (statusVehicle_E || statusVehicle_W) && (!statusVehicle_N && !statusVehicle_S)) {
+				//xSemaphoreTake(mutexHandle, portMAX_DELAY);
+				disableTraffic_NS_Test();
+				activateTraffic_EW_Test();
+				//xSemaphoreGive(mutexHandle);
+			} else if ( (statusVehicle_E || statusVehicle_W ) && (statusVehicle_N || statusVehicle_S)) {
+				// Congestion - Conduct almost same logic as forever loop
+				//xSemaphoreTake(mutexHandle, portMAX_DELAY);
+				vTaskDelay(testingDelay2);
+				if (statusTraffic_NS == 1) {
+					disableTraffic_NS_Test();
+					activateTraffic_EW();
+					vTaskDelay(greenDelay);
+				} else {
+					disableTraffic_EW_Test();
+					activateTraffic_NS();
+					vTaskDelay(greenDelay);
+				}
+				//xSemaphoreGive(mutexHandle);
 			}
+			xSemaphoreGive(mutexHandle);
 		}
 #else
 #endif

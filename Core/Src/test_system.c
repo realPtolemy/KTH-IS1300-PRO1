@@ -21,6 +21,7 @@ extern const TickType_t orangeDelay;
 extern const TickType_t redDelayMax;
 extern const TickType_t pedestrianDelay;
 extern const TickType_t safetyDelay;
+extern const TickType_t testingDelay2;
 
 extern TickType_t startTime;
 extern TickType_t endTime;
@@ -55,11 +56,11 @@ void init_Test(){
 }
 
 void activateTraffic_NS_Test() {
-	traffic_NS_Test(3);
-	traffic_NS_Test(2);
+	traffic_NS(3);
+	traffic_NS(2);
 	vTaskDelay( orangeDelay );
-	pedestrian_W_Test(1);
-	traffic_NS_Test(1);
+	pedestrian_W(1);
+	traffic_NS(1);
 	statusTraffic_NS = 1;
 }
 
@@ -83,11 +84,11 @@ void disableTraffic_NS_Test() {
 }
 
 void activateTraffic_EW_Test() {
-	traffic_EW_Test(3);
-	traffic_EW_Test(2);
+	traffic_EW(3);
+	traffic_EW(2);
 	vTaskDelay( orangeDelay );
-	pedestrian_N_Test(1);
-	traffic_EW_Test(1);
+	pedestrian_N(1);
+	traffic_EW(1);
 	statusTraffic_EW = 1;
 }
 
@@ -118,6 +119,7 @@ void staticTraffic_NS_Test(){
 		}
 		traffic_NS(1);
 		pedestrian_W(1);
+		vTaskDelay(testingDelay2);
 		checkTraffic();
 	}
 }
@@ -130,6 +132,7 @@ void staticTraffic_EW_Test(){
 		}
 		traffic_EW(1);
 		pedestrian_N(1);
+		vTaskDelay(testingDelay2);
 		checkTraffic();
 	}
 }
