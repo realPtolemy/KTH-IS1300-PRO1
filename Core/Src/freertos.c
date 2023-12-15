@@ -215,7 +215,7 @@ void StartIdle(void *argument)
 				xSemaphoreGive(mutexHandle);
 				vTaskDelay(testingDelay);
 				xSemaphoreTake(mutexHandle, portMAX_DELAY);
-				activateTraffic_EW();
+				activateTraffic_Test(EASTWEST, NORTH);
 				vTaskDelay(greenDelay);
 				xSemaphoreGive(mutexHandle);
 			} else {
@@ -224,7 +224,7 @@ void StartIdle(void *argument)
 				xSemaphoreGive(mutexHandle);
 				vTaskDelay( testingDelay );
 				xSemaphoreTake(mutexHandle, portMAX_DELAY);
-				activateTraffic_NS();
+				activateTraffic_Test(NORTHSOUTH, WEST);
 				vTaskDelay(greenDelay);
 				xSemaphoreGive(mutexHandle);
 			}
@@ -309,7 +309,7 @@ void StartTraffic(void *argument)
 			xSemaphoreTake(mutexHandle, portMAX_DELAY);
 			if ( (!statusTraffic_NS && !statusTraffic_EW) && (statusVehicle_N || statusVehicle_S) && (!statusVehicle_E && !statusVehicle_W)) {
 				//xSemaphoreTake(mutexHandle, portMAX_DELAY);
-				activateTraffic_NS_Test();
+				activateTraffic_Test(NORTHSOUTH, WEST);
 				//vTaskDelay(greenDelay);
 				checkTraffic();
 				staticTraffic_NS_Test();
@@ -318,7 +318,7 @@ void StartTraffic(void *argument)
 				//xSemaphoreGive(mutexHandle);
 			} else if ( (!statusTraffic_NS && !statusTraffic_EW) && (statusVehicle_E || statusVehicle_W ) && (!statusVehicle_N && !statusVehicle_S)) {
 				//xSemaphoreTake(mutexHandle, portMAX_DELAY);
-				activateTraffic_EW_Test();
+				activateTraffic_Test(EASTWEST, NORTH);
 				//vTaskDelay(greenDelay);
 				checkTraffic();
 				staticTraffic_EW_Test();
@@ -329,7 +329,7 @@ void StartTraffic(void *argument)
 				if (statusTraffic_NS == 1) {
 					staticTraffic_NS_Test();
 				} else {
-					activateTraffic_NS_Test();
+					activateTraffic_Test(NORTHSOUTH, WEST);
 					staticTraffic_NS_Test();
 				}
 				//xSemaphoreGive(mutexHandle);
@@ -338,19 +338,19 @@ void StartTraffic(void *argument)
 				if (statusTraffic_EW == 1) {
 					staticTraffic_EW_Test();
 				} else {
-					activateTraffic_EW_Test();
+					activateTraffic_Test(EASTWEST, NORTH);
 					staticTraffic_EW_Test();
 				}
 				//xSemaphoreGive(mutexHandle);
 			} else if ( (!statusTraffic_NS && statusTraffic_EW) && (statusVehicle_N || statusVehicle_S) && (!statusVehicle_E && !statusVehicle_W)) {
 				//xSemaphoreTake(mutexHandle, portMAX_DELAY);
 				disableTraffic_EW_Test();
-				activateTraffic_NS_Test();
+				activateTraffic_Test(NORTHSOUTH, WEST);
 				//xSemaphoreGive(mutexHandle);
 			} else if ( (statusTraffic_NS && !statusTraffic_EW) && (statusVehicle_E || statusVehicle_W) && (!statusVehicle_N && !statusVehicle_S)) {
 				//xSemaphoreTake(mutexHandle, portMAX_DELAY);
 				disableTraffic_NS_Test();
-				activateTraffic_EW_Test();
+				activateTraffic_Test(EASTWEST, NORTH);
 				//xSemaphoreGive(mutexHandle);
 			} else if ( (statusVehicle_E || statusVehicle_W ) && (statusVehicle_N || statusVehicle_S)) {
 				// Congestion - Conduct almost same logic as forever loop
@@ -358,11 +358,11 @@ void StartTraffic(void *argument)
 				vTaskDelay(testingDelay2);
 				if (statusTraffic_NS == 1) {
 					disableTraffic_NS_Test();
-					activateTraffic_EW();
+					activateTraffic_Test(EASTWEST, NORTH);
 					vTaskDelay(greenDelay);
 				} else {
 					disableTraffic_EW_Test();
-					activateTraffic_NS();
+					activateTraffic_Test(NORTHSOUTH, WEST);
 					vTaskDelay(greenDelay);
 				}
 				//xSemaphoreGive(mutexHandle);

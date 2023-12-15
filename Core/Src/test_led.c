@@ -15,6 +15,16 @@
 uint8_t togglePedestrianGreen;
 uint8_t togglePedestrianBlue;
 
+extern uint8_t statusVehicle_N;
+extern uint8_t statusVehicle_S;
+extern uint8_t statusVehicle_E;
+extern uint8_t statusVehicle_W;
+
+extern uint8_t statusTraffic_NS;
+extern uint8_t statusTraffic_EW;
+extern uint8_t statusPedestrian_N;
+extern uint8_t statusPedestrian_W;
+
 
 // Test function for north and south traffic lights
 void trafficLED_Test_NS() {
@@ -282,6 +292,98 @@ void pedestrianPending_W_Test(){
 		REG[0] = REG[0] & 0b011111;
 	} else {
 		REG[0] = REG[0] | 0b100000;
+	}
+	setReg_Test();
+}
+
+/* Change NORTH & SOUTH TRAFFIC lights */
+void trafficLight_Test(enum LED status, enum Street dir){
+	if(dir == NORTHSOUTH) {
+		// Start by masking and storing the state of all other traffic lights
+		REG[2] = REG[2] & 0b000111; // Mask current traffic lights at EAST, clear NORTH traffic lights
+		REG[1] = REG[1] & 0b111000;	// Mask current pedestrian lights at NORTH, clear SOUTH traffic lights
+		// Set lights per input status
+		switch(status) {
+		case GREEN:	// Set the lights GREEN
+			// Bitwise-OR merge masked current states with new states for NORTH and SOUTH traffic lights
+			REG[2] = REG[2] | 0b100000; // Set NORTH traffic light bit to GREEN
+			REG[1] = REG[1] | 0b000100; // Set SOUTH traffic light bit to GREEN
+			statusTraffic_NS = 1;
+			break;
+		case ORANGE: // Set the lights YELLOW
+			// Bitwise-OR merge masked current states with new states for NORTH and SOUTH traffic lights
+			REG[2] = REG[2] | 0b010000; // Set NORTH traffic light bit to YELLOW
+			REG[1] = REG[1] | 0b000010; // Set SOUTH traffic light bit to YELLOW
+			break;
+		case RED: // Set the lights RED
+			// Bitwise-OR merge masked current states with new states for NORTH and SOUTH traffic lights
+			REG[2] = REG[2] | 0b001000; // Set NORTH traffic light bit to RED
+			REG[1] = REG[1] | 0b000001; // Set SOUTH traffic light bit to RED
+			statusTraffic_NS = 0;
+			break;
+		}
+	} else if (dir == EASTWEST) {
+		// Start by masking and storing the state of all other traffic lights
+		REG[2] = REG[2] & 0b111000; // Mask current traffic lights at NORTH, clear EAST traffic lights
+		REG[0] = REG[0] & 0b111000; // Mask current pedestrian lights at WEST, clear WEST traffic lights
+		// Set lights per input status
+		switch(status) {
+			case GREEN:	// Set the lights GREEN
+				// Bitwise-OR merge masked current states with new states for EAST and WEST traffic lights
+				REG[2] = REG[2] | 0b000100; // Set EAST traffic light bit to GREEN
+				REG[0] = REG[0] | 0b000100; // Set WEST traffic light bit to GREEN
+				statusTraffic_EW = 1;
+				break;
+			case ORANGE: // Set the lights YELLOW
+				// Bitwise-OR merge masked current states with new states for EAST and WEST traffic lights
+				REG[2] = REG[2] | 0b000010; // Set EAST traffic light bit to YELLOW
+				REG[0] = REG[0] | 0b000010; // Set WEST traffic light bit to YELLOW
+				break;
+			case RED: // Set the lights RED
+				// Bitwise-OR merge masked current states with new states for EAST and WEST traffic lights
+				REG[2] = REG[2] | 0b000001; // Set NORTH traffic light bit to RED
+				REG[0] = REG[0] | 0b000001; // Set SOUTH traffic light bit to RED
+				statusTraffic_EW = 0;
+				break;
+		}
+	}
+	setReg_Test();
+}
+
+/* Change NORTH PEDESTRIAN lights */
+void pedestrianLight_Test(enum LED status, enum Street dir){
+	if (dir == NORTH) {
+		// Start by masking and storing the state of all other lights
+		REG[1] = REG[1] & 0b100111;	// Mask current traffic lights at SOUTH, clear RED and GREEN pedestrian lights at NORTH
+		// Set lights per input status
+		switch(status) {
+			case GREEN:	// Set the lights GREEN
+				// Bitwise-OR merge masked current states with new states for NORTH pedestrian and SOUTH traffic lights
+				REG[1] = REG[1] | 0b010000; // Set NORTH pedestrian light bit to GREEN
+				statusPedestrian_N = 1;
+				break;
+			case RED: // Set the lights RED
+				// Bitwise-OR merge masked current states with new states for NORTH pedestrian and SOUTH traffic lights
+				REG[1] = REG[1] | 0b001000; // Set NORTH pedestrian light bit to RED
+				statusPedestrian_N = 0;
+				break;
+		}
+	} else if (dir == WEST) {
+		// Start by masking and storing the state of all other lights
+		REG[0] = REG[0] & 0b100111;	// Mask current WEST traffic lights and BLUE indicator light, clear WEST pedestrian lights
+		// Set lights per input status
+		switch(status) {
+			case GREEN:	// Set the lights GREEN
+				// Bitwise-OR merge masked current states with new states for WEST pedestrian and WEST traffic lights
+				REG[0] = REG[0] | 0b010000; // Set WEST pedestrian light bit to GREEN
+				statusPedestrian_W = 1;
+				break;
+			case RED: // Set the lights RED
+				// Bitwise-OR merge masked current states with new states for WEST pedestrian and WEST traffic lights
+				REG[0] = REG[0] | 0b001000; // Set WEST pedestrian light bit to RED
+				statusPedestrian_W = 0;
+				break;
+		}
 	}
 	setReg_Test();
 }

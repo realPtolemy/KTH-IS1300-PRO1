@@ -56,12 +56,20 @@ void init_Test(){
 }
 
 void activateTraffic_NS_Test() {
-	traffic_NS(3);
-	traffic_NS(2);
-	vTaskDelay( orangeDelay );
-	pedestrian_W(1);
-	traffic_NS(1);
+	trafficLight_Test(RED);
+	trafficLight_Test(ORANGE);
+	vTaskDelay(orangeDelay);
+	pedestrianLight_Test(GREEN, WEST);
+	trafficLight_Test(GREEN);
 	statusTraffic_NS = 1;
+}
+
+void activateTraffic_Test(enum Street t, enum Street p) {
+	trafficLight_Test(RED, t);
+	trafficLight_Test(ORANGE, t);
+	vTaskDelay(orangeDelay);
+	pedestrianLight_Test(GREEN, p);
+	trafficLight_Test(GREEN, t);
 }
 
 void disableTraffic_NS_Test() {

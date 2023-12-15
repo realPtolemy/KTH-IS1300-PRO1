@@ -8,6 +8,27 @@
 
 #ifndef INC_SRC_TEST_LED_H_
 #define INC_SRC_TEST_LED_H_
+
+/*** Defined enumerations ***/
+// Traffic light color enumeration
+enum LED {
+	RED,
+	ORANGE,
+	GREEN,
+	BLUE
+};
+
+// Street direction enumeration
+enum Street {
+	NORTHSOUTH,
+	EASTWEST,
+	NORTH,
+	WEST,
+
+};
+
+
+/*** Defined Functions ***/
 // LED functions - test_led.c
 void trafficLED_Test_NS(void);
 void trafficLED_Test_EW(void);
