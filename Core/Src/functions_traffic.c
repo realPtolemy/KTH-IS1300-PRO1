@@ -87,16 +87,16 @@ void disableTraffic_EW() {
 
 void staticTraffic_NS(){
 	while(statusVehicle_N || statusVehicle_S) {
-		traffic_NS_Test(1);
-		pedestrian_W_Test(1);
+		traffic_NS(1);
+		pedestrian_W(1);
 		checkTraffic();
 	}
 }
 
 void staticTraffic_EW(){
 	while(statusVehicle_E || statusVehicle_W) {
-		traffic_EW_Test(1);
-		pedestrian_N_Test(1);
+		traffic_EW(1);
+		pedestrian_N(1);
 		checkTraffic();
 	}
 }

@@ -204,8 +204,8 @@ void StartIdle(void *argument)
 			vTaskDelay(testingDelay);
 			if (statusTraffic_NS == 1) {
 				xSemaphoreTake(mutexHandle, 0);
-				disableTraffic_NS();
-				vTaskDelay( safetyDelay );
+				disableTraffic_NS_Test();
+				//vTaskDelay( safetyDelay ); // Implemented in disableTraffic function
 				xSemaphoreGive(mutexHandle);
 				vTaskDelay(testingDelay);
 				xSemaphoreTake(mutexHandle, portMAX_DELAY);
@@ -214,8 +214,8 @@ void StartIdle(void *argument)
 				xSemaphoreGive(mutexHandle);
 			} else {
 				xSemaphoreTake(mutexHandle, 0);
-				disableTraffic_EW();
-				vTaskDelay (safetyDelay );
+				disableTraffic_EW_Test();
+				//vTaskDelay( safetyDelay ); // Implemented in disableTraffic function
 				xSemaphoreGive(mutexHandle);
 				vTaskDelay( testingDelay );
 				xSemaphoreTake(mutexHandle, portMAX_DELAY);
@@ -293,37 +293,36 @@ void StartTraffic(void *argument)
 				xSemaphoreTake(mutexHandle, portMAX_DELAY);
 				activateTraffic_NS();
 				vTaskDelay(greenDelay);
-				checkTraffic(); // DO NOT FORGET TO CHECK TRAFFIC!!!
-				// DO NOT FORGET TO CHECK TRAFFIC!!!
-				// DO NOT FORGET TO CHECK TRAFFIC!!!
-				// Works after checking traffic! :)
-				staticTraffic_NS();
+				checkTraffic();
+				staticTraffic_NS_Test();
 				// Enhance how this function works if N or S car is being activated as EW street turns red.
-				disableTraffic_NS();
-
-
+				disableTraffic_NS_Test();
+				xSemaphoreGive(mutexHandle);
+			} else if ( (!statusTraffic_NS && !statusTraffic_EW) && (statusVehicle_E || statusVehicle_W )) {
+				xSemaphoreTake(mutexHandle, portMAX_DELAY);
+				activateTraffic_EW();
+				vTaskDelay(greenDelay);
+				checkTraffic();
+				staticTraffic_EW_Test();
+				disableTraffic_EW_Test();
+				xSemaphoreGive(mutexHandle);
 		//	} else if ( (statusTraffic_NS && !statusTraffic_EW) && (statusVehicle_N || statusVehicle_S) ) {
 		//		xSemaphoreTake(mutexHandle, portMAX_DELAY);
 		//		pedestrianPending_N_Test();
 		//		staticTraffic_NS_Test();
 		//		xSemaphoreGive(mutexHandle);
-			} else if ( (!statusTraffic_NS && statusTraffic_EW) && (statusVehicle_N || statusVehicle_S) ) {
-				xSemaphoreTake(mutexHandle, portMAX_DELAY);
-				disableTraffic_EW();
-				vTaskDelay (safetyDelay );
-				activateTraffic_NS_Test();
-				xSemaphoreGive(mutexHandle);
-			} else if ( (!statusTraffic_NS && statusTraffic_EW) && (statusVehicle_E || statusVehicle_W) ) {
-				//xSemaphoreTake(mutexHandle, portMAX_DELAY);
-				traffic_EW_Test(1);
-				pedestrian_N_Test(1);
-				pedestrianPending_W_Test();
-				//xSemaphoreGive(mutexHandle);
-			} else if ( (!statusTraffic_NS && !statusTraffic_EW) && (statusVehicle_E || statusVehicle_W )) {
-				//xSemaphoreTake(mutexHandle, portMAX_DELAY);
-				activateTraffic_EW();
-				//xSemaphoreGive(mutexHandle);
-				//pedestrianPending_N_Test();
+		//	} else if ( (!statusTraffic_NS && statusTraffic_EW) && (statusVehicle_N || statusVehicle_S) ) {
+		//		xSemaphoreTake(mutexHandle, portMAX_DELAY);
+		//		disableTraffic_EW();
+		//		vTaskDelay (safetyDelay );
+		//		activateTraffic_NS_Test();
+		//		xSemaphoreGive(mutexHandle);
+		//	} else if ( (!statusTraffic_NS && statusTraffic_EW) && (statusVehicle_E || statusVehicle_W) ) {
+		//		//xSemaphoreTake(mutexHandle, portMAX_DELAY);
+		//		traffic_EW_Test(1);
+		//		pedestrian_N_Test(1);
+		//		pedestrianPending_W_Test();
+		//		xSemaphoreGive(mutexHandle);
 			}
 		}
 #else

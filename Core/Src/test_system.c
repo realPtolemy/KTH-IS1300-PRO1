@@ -20,6 +20,7 @@ extern const TickType_t greenDelay;
 extern const TickType_t orangeDelay;
 extern const TickType_t redDelayMax;
 extern const TickType_t pedestrianDelay;
+extern const TickType_t safetyDelay;
 
 extern TickType_t startTime;
 extern TickType_t endTime;
@@ -63,19 +64,22 @@ void activateTraffic_NS_Test() {
 }
 
 void disableTraffic_NS_Test() {
-	traffic_NS_Test(1);
+	traffic_NS(1);
 	startTime = xTaskGetTickCount();
-	traffic_NS_Test(2);
 	while (elapsedTime < orangeDelay ) {
-		pedestrianWarning_W_Test();
+		pedestrianWarning_W();
 		endTime = xTaskGetTickCount();
 		elapsedTime = endTime -  startTime;
 		vTaskDelay( toggleFreq );
 	}
 	elapsedTime = 0;
-	pedestrian_W_Test(2);
-	traffic_NS_Test(3);
+	pedestrian_W(2);
+	vTaskDelay( safetyDelay );
+	traffic_NS(2);
+	vTaskDelay( orangeDelay );
+	traffic_NS(3);
 	statusTraffic_NS = 0;
+	vTaskDelay(safetyDelay);
 }
 
 void activateTraffic_EW_Test() {
@@ -88,33 +92,44 @@ void activateTraffic_EW_Test() {
 }
 
 void disableTraffic_EW_Test() {
-	traffic_EW_Test(1);
+	traffic_EW(1);
 	startTime = xTaskGetTickCount();
-	traffic_EW_Test(2);
 	while (elapsedTime < orangeDelay ) {
-		pedestrianWarning_N_Test();
+		pedestrianWarning_N();
 		endTime = xTaskGetTickCount();
 		elapsedTime = endTime -  startTime;
 		vTaskDelay( toggleFreq );
 	}
 	elapsedTime = 0;
-	pedestrian_N_Test(2);
-	traffic_EW_Test(3);
+	pedestrian_N(2);
+	vTaskDelay(safetyDelay);
+	traffic_EW(2);
+	vTaskDelay( orangeDelay );
+	traffic_EW(3);
 	statusTraffic_EW = 0;
+	vTaskDelay(safetyDelay);
 }
 
 void staticTraffic_NS_Test(){
 	while(statusVehicle_N || statusVehicle_S) {
-		traffic_NS_Test(1);
-		pedestrian_W_Test(1);
+		if(statusVehicle_E || statusVehicle_W) {
+			vTaskDelay( redDelayMax );
+			break;
+		}
+		traffic_NS(1);
+		pedestrian_W(1);
 		checkTraffic();
 	}
 }
 
 void staticTraffic_EW_Test(){
 	while(statusVehicle_E || statusVehicle_W) {
-		traffic_EW_Test(1);
-		pedestrian_N_Test(1);
+		if(statusVehicle_N || statusVehicle_S) {
+			vTaskDelay( redDelayMax );
+			break;
+		}
+		traffic_EW(1);
+		pedestrian_N(1);
 		checkTraffic();
 	}
 }
