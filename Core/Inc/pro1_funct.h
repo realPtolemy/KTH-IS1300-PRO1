@@ -34,6 +34,9 @@ void disableTraffic_EW(void);
 void staticTraffic_NS(void);
 void staticTraffic_EW(void);
 
+// Read traffic from switches
+uint8_t checkTraffic(void);
+
 
 // Tasks
 

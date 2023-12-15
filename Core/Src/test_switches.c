@@ -79,7 +79,7 @@ void pedestrianSwitch_Test_W() {
 }
 
 
-uint8_t checkTraffic() {
+uint8_t checkTraffic_Test() {
 	statusVehicle_N = HAL_GPIO_ReadPin(TL4_Car_GPIO_Port, TL4_Car_Pin);
 	statusVehicle_S = HAL_GPIO_ReadPin(TL2_Car_GPIO_Port, TL2_Car_Pin);
 	statusVehicle_E = HAL_GPIO_ReadPin(TL3_Car_GPIO_Port, TL3_Car_Pin);
