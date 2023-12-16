@@ -297,8 +297,8 @@ void pedestrianPending_W_Test(){
 }
 
 /* Change NORTH & SOUTH TRAFFIC lights */
-void trafficLight_Test(enum LED status, enum Street dir){
-	if(dir == NORTHSOUTH) {
+void trafficLight_Test(enum LED status, enum Street t_dir){
+	if(t_dir == T_NORTHSOUTH) {
 		// Start by masking and storing the state of all other traffic lights
 		REG[2] = REG[2] & 0b000111; // Mask current traffic lights at EAST, clear NORTH traffic lights
 		REG[1] = REG[1] & 0b111000;	// Mask current pedestrian lights at NORTH, clear SOUTH traffic lights
@@ -322,7 +322,7 @@ void trafficLight_Test(enum LED status, enum Street dir){
 			statusTraffic_NS = 0;
 			break;
 		}
-	} else if (dir == EASTWEST) {
+	} else if (t_dir == T_EASTWEST) {
 		// Start by masking and storing the state of all other traffic lights
 		REG[2] = REG[2] & 0b111000; // Mask current traffic lights at NORTH, clear EAST traffic lights
 		REG[0] = REG[0] & 0b111000; // Mask current pedestrian lights at WEST, clear WEST traffic lights
@@ -350,40 +350,45 @@ void trafficLight_Test(enum LED status, enum Street dir){
 	setReg_Test();
 }
 
-/* Change NORTH PEDESTRIAN lights */
-void pedestrianLight_Test(enum LED status, enum Street dir){
-	if (dir == NORTH) {
-		// Start by masking and storing the state of all other lights
-		REG[1] = REG[1] & 0b100111;	// Mask current traffic lights at SOUTH, clear RED and GREEN pedestrian lights at NORTH
-		// Set lights per input status
-		switch(status) {
-			case GREEN:	// Set the lights GREEN
-				// Bitwise-OR merge masked current states with new states for NORTH pedestrian and SOUTH traffic lights
-				REG[1] = REG[1] | 0b010000; // Set NORTH pedestrian light bit to GREEN
-				statusPedestrian_N = 1;
-				break;
-			case RED: // Set the lights RED
-				// Bitwise-OR merge masked current states with new states for NORTH pedestrian and SOUTH traffic lights
-				REG[1] = REG[1] | 0b001000; // Set NORTH pedestrian light bit to RED
-				statusPedestrian_N = 0;
-				break;
-		}
-	} else if (dir == WEST) {
-		// Start by masking and storing the state of all other lights
-		REG[0] = REG[0] & 0b100111;	// Mask current WEST traffic lights and BLUE indicator light, clear WEST pedestrian lights
-		// Set lights per input status
-		switch(status) {
-			case GREEN:	// Set the lights GREEN
-				// Bitwise-OR merge masked current states with new states for WEST pedestrian and WEST traffic lights
-				REG[0] = REG[0] | 0b010000; // Set WEST pedestrian light bit to GREEN
-				statusPedestrian_W = 1;
-				break;
-			case RED: // Set the lights RED
-				// Bitwise-OR merge masked current states with new states for WEST pedestrian and WEST traffic lights
-				REG[0] = REG[0] | 0b001000; // Set WEST pedestrian light bit to RED
-				statusPedestrian_W = 0;
-				break;
-		}
+/* Change PEDESTRIAN lights */
+void pedestrianLight_Test(enum LED status, enum Street p_dir){
+	// Start by masking and storing the state of all other lights
+	REG[p_dir] = REG[p_dir] & 0b100111;	// Mask current traffic lights at SOUTH, clear RED and GREEN pedestrian lights at NORTH
+	// Set lights per input status
+	switch(status) {
+	case GREEN:	// Set the lights GREEN
+		// Bitwise-OR merge masked current states with new states for NORTH pedestrian and SOUTH traffic lights
+		REG[p_dir] = REG[p_dir] | 0b010000; // Set NORTH pedestrian light bit to GREEN
+		statusPedestrian_N = 1;
+		break;
+	case RED: // Set the lights RED
+		// Bitwise-OR merge masked current states with new states for NORTH pedestrian and SOUTH traffic lights
+		REG[p_dir] = REG[p_dir] | 0b001000; // Set NORTH pedestrian light bit to RED
+		statusPedestrian_N = 0;
+		break;
+	}
+	setReg_Test();
+}
+
+/* Activate PEDESTRIAN BLUE lights */
+void pedestrianPending_Test(enum Street p_dir){
+	// Start by masking and storing the state of all other lights
+	togglePedestrianBlue = REG[p_dir] & 0b100000;
+	if (togglePedestrianBlue) {
+		REG[p_dir] = REG[p_dir] & 0b011111;
+	} else {
+		REG[p_dir] = REG[p_dir] | 0b100000;
+	}
+	setReg_Test();
+}
+
+/* Activate PEDESTRIAN GREEN WARNING lights */
+void pedestrianWarning_Test(enum Street p_dir){
+	togglePedestrianGreen = REG[p_dir] & 0b010000; // Mask the pedestrian bit
+	if(togglePedestrianGreen) {
+		REG[p_dir] = REG[p_dir] & 0b101111; // Set NORTH pedestrian light bit to GREEN
+	} else {
+		REG[p_dir] = REG[p_dir] | 0b010000; // Set NORTH pedestrian light bit to GREEN
 	}
 	setReg_Test();
 }

@@ -20,10 +20,10 @@ enum LED {
 
 // Street direction enumeration
 enum Street {
-	NORTHSOUTH,
-	EASTWEST,
-	NORTH,
-	WEST,
+	T_NORTHSOUTH,
+	T_EASTWEST,
+	P_NORTH = 1,
+	P_WEST = 0,
 
 };
 

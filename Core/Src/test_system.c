@@ -59,17 +59,9 @@ void activateTraffic_NS_Test() {
 	trafficLight_Test(RED);
 	trafficLight_Test(ORANGE);
 	vTaskDelay(orangeDelay);
-	pedestrianLight_Test(GREEN, WEST);
+	pedestrianLight_Test(GREEN, P_WEST);
 	trafficLight_Test(GREEN);
 	statusTraffic_NS = 1;
-}
-
-void activateTraffic_Test(enum Street t, enum Street p) {
-	trafficLight_Test(RED, t);
-	trafficLight_Test(ORANGE, t);
-	vTaskDelay(orangeDelay);
-	pedestrianLight_Test(GREEN, p);
-	trafficLight_Test(GREEN, t);
 }
 
 void disableTraffic_NS_Test() {
@@ -159,4 +151,55 @@ void activatePedestrian_W_Test(){
 
 void disablePedestrian_W_Test(){
 	statusPedestrian_W = 0;
+}
+
+
+void activateTraffic_Test(enum Street t_dir, enum Street p_dir) {
+	trafficLight_Test(RED, t_dir);
+	trafficLight_Test(ORANGE, t_dir);
+	vTaskDelay(orangeDelay);
+	pedestrianLight_Test(GREEN, p_dir);
+	trafficLight_Test(GREEN, t_dir);
+}
+
+void disableTraffic_Test(enum Street t_dir, enum Street p_dir) {
+	trafficLight_Test(GREEN, t_dir);
+	startTime = xTaskGetTickCount();
+	while (elapsedTime < orangeDelay ) {
+		pedestrianWarning_Test(p_dir);
+		endTime = xTaskGetTickCount();
+		elapsedTime = endTime -  startTime;
+		vTaskDelay( toggleFreq );
+	}
+	elapsedTime = 0;
+	pedestrianLight_Test(RED, p_dir);
+	vTaskDelay(safetyDelay);
+	trafficLight_Test(ORANGE, t_dir);
+	vTaskDelay(orangeDelay);
+	trafficLight_Test(RED, t_dir);
+	statusTraffic_NS = 0;
+	vTaskDelay(safetyDelay);
+}
+
+void staticTraffic_Test(){
+	while(statusVehicle_E || statusVehicle_W) {
+		if(statusVehicle_N || statusVehicle_S) {
+			vTaskDelay(redDelayMax);
+			break;
+		}
+		trafficLight_Test(GREEN, T_EASTWEST);
+		pedestrianLight_Test(GREEN, P_NORTH);
+		vTaskDelay(testingDelay2);
+		checkTraffic_Test();
+	}
+	while(statusVehicle_N || statusVehicle_S) {
+		if(statusVehicle_E || statusVehicle_W) {
+			vTaskDelay(redDelayMax);
+			break;
+		}
+		trafficLight_Test(GREEN, T_NORTHSOUTH);
+		pedestrianLight_Test(GREEN, P_WEST);
+		vTaskDelay(testingDelay2);
+		checkTraffic_Test();
+	}
 }

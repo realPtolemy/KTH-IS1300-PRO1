@@ -9,7 +9,12 @@
 #include "main.h"
 #include "spi.h"
 #include "gpio.h"
+#include "FreeRTOS.h"
+#include "task.h"
+#include "main.h"
+#include "cmsis_os.h"
 
+extern const TickType_t testingDelay;
 extern volatile uint8_t statusVehicle_N;
 extern volatile uint8_t statusVehicle_S;
 extern volatile uint8_t statusVehicle_E;
@@ -94,4 +99,5 @@ uint8_t checkTraffic_Test() {
 	} else {
 		return 0;
 	}
+	vTaskDelay(testingDelay);
 };

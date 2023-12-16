@@ -60,7 +60,7 @@ const TickType_t safetyDelay = pdMS_TO_TICKS(3000);		// Real life ~6000 ms
 const TickType_t greenDelay = pdMS_TO_TICKS(8000); 		// Real life ~47000 ms
 const TickType_t orangeDelay = pdMS_TO_TICKS(2500); 	// Real life ~5000 ms
 const TickType_t redDelayMax = pdMS_TO_TICKS(500);		// Real life ?? ms
-const TickType_t testingDelay = pdMS_TO_TICKS(100); // ms to ticks
+const TickType_t testingDelay = pdMS_TO_TICKS(500); // ms to ticks
 const TickType_t testingDelay2 = pdMS_TO_TICKS(800); // ms to ticks
 
 TickType_t startTime;
@@ -208,27 +208,28 @@ void StartIdle(void *argument)
 
 #ifdef RUN_TEST_IDLE
 		if( !pendingTraffic ) {
-			vTaskDelay(testingDelay);
-			if (statusTraffic_NS == 1) {
+			if (statusTraffic_NS) {
 				xSemaphoreTake(mutexHandle, 0);
-				disableTraffic_NS_Test();
+				disableTraffic_Test(T_NORTHSOUTH, P_WEST);
 				xSemaphoreGive(mutexHandle);
 				vTaskDelay(testingDelay);
 				xSemaphoreTake(mutexHandle, portMAX_DELAY);
-				activateTraffic_Test(EASTWEST, NORTH);
-				vTaskDelay(greenDelay);
+				if (!statusTraffic_NS) {
+					activateTraffic_Test(T_EASTWEST, P_NORTH);
+				}
 				xSemaphoreGive(mutexHandle);
 			} else {
 				xSemaphoreTake(mutexHandle, 0);
-				disableTraffic_EW_Test();
+				disableTraffic_Test(T_EASTWEST, P_NORTH);
 				xSemaphoreGive(mutexHandle);
 				vTaskDelay( testingDelay );
 				xSemaphoreTake(mutexHandle, portMAX_DELAY);
-				activateTraffic_Test(NORTHSOUTH, WEST);
-				vTaskDelay(greenDelay);
+				if (!statusTraffic_EW) {
+					activateTraffic_Test(T_NORTHSOUTH, P_WEST);
+				}
 				xSemaphoreGive(mutexHandle);
 			}
-			vTaskDelay(testingDelay);
+			vTaskDelay(greenDelay);
 		}
 #else
 		if( !pendingTraffic ) {
@@ -304,68 +305,50 @@ void StartTraffic(void *argument)
 	while(1)
 	{
 #ifdef RUN_TEST_TRAFFIC
-		pendingTraffic = checkTraffic();
+		pendingTraffic = checkTraffic_Test();
 		if ( pendingTraffic ) {
+			//vTaskDelay(testingDelay);
 			xSemaphoreTake(mutexHandle, portMAX_DELAY);
+
+			// If all roads are red, and a vehicle appears from ONE direction
 			if ( (!statusTraffic_NS && !statusTraffic_EW) && (statusVehicle_N || statusVehicle_S) && (!statusVehicle_E && !statusVehicle_W)) {
-				//xSemaphoreTake(mutexHandle, portMAX_DELAY);
-				activateTraffic_Test(NORTHSOUTH, WEST);
-				//vTaskDelay(greenDelay);
-				checkTraffic();
-				staticTraffic_NS_Test();
-				// Enhance how this function works if N or S car is being activated as EW street turns red.
-				disableTraffic_NS_Test();
-				//xSemaphoreGive(mutexHandle);
+				activateTraffic_Test(T_NORTHSOUTH, P_WEST);
+				vTaskDelay(greenDelay);
 			} else if ( (!statusTraffic_NS && !statusTraffic_EW) && (statusVehicle_E || statusVehicle_W ) && (!statusVehicle_N && !statusVehicle_S)) {
-				//xSemaphoreTake(mutexHandle, portMAX_DELAY);
-				activateTraffic_Test(EASTWEST, NORTH);
-				//vTaskDelay(greenDelay);
-				checkTraffic();
-				staticTraffic_EW_Test();
-				disableTraffic_EW_Test();
-				//xSemaphoreGive(mutexHandle);
+				activateTraffic_Test(T_EASTWEST, P_NORTH);
+				vTaskDelay(greenDelay);
+			// R2.5 A traffic light remains green if there are active cars in either allowed direction and no active cars are waiting on red traffic lights
 			} else if ( (statusTraffic_NS && !statusTraffic_EW) && (statusVehicle_N || statusVehicle_S) && (!statusVehicle_E && !statusVehicle_W)) {
-				//xSemaphoreTake(mutexHandle, portMAX_DELAY);
-				if (statusTraffic_NS == 1) {
-					staticTraffic_NS_Test();
+				if (statusTraffic_NS) {
+					staticTraffic_Test(); // R2.6 is considered within the staticTraffic_Test function
 				} else {
-					activateTraffic_Test(NORTHSOUTH, WEST);
-					staticTraffic_NS_Test();
+					activateTraffic_Test(T_NORTHSOUTH, P_WEST);
+					staticTraffic_Test();
 				}
-				//xSemaphoreGive(mutexHandle);
 			} else if ( (!statusTraffic_NS && statusTraffic_EW) && (statusVehicle_E || statusVehicle_W ) && (!statusVehicle_N && !statusVehicle_S)) {
-				//xSemaphoreTake(mutexHandle, portMAX_DELAY);
-				if (statusTraffic_EW == 1) {
-					staticTraffic_EW_Test();
+				if (statusTraffic_EW) {
+					staticTraffic_Test(); // R2.6 is considered within the staticTraffic_Test function
 				} else {
-					activateTraffic_Test(EASTWEST, NORTH);
-					staticTraffic_EW_Test();
+					activateTraffic_Test(T_EASTWEST, P_NORTH);
+					staticTraffic_Test();
 				}
-				//xSemaphoreGive(mutexHandle);
+			// R2.7 If a car arrives at a red light and there are no active cars in either allowed direction, the signal transitions immediately to green
 			} else if ( (!statusTraffic_NS && statusTraffic_EW) && (statusVehicle_N || statusVehicle_S) && (!statusVehicle_E && !statusVehicle_W)) {
-				//xSemaphoreTake(mutexHandle, portMAX_DELAY);
-				disableTraffic_EW_Test();
-				activateTraffic_Test(NORTHSOUTH, WEST);
-				//xSemaphoreGive(mutexHandle);
+				disableTraffic_Test(T_EASTWEST, P_NORTH);
+				activateTraffic_Test(T_NORTHSOUTH, P_WEST);
 			} else if ( (statusTraffic_NS && !statusTraffic_EW) && (statusVehicle_E || statusVehicle_W) && (!statusVehicle_N && !statusVehicle_S)) {
-				//xSemaphoreTake(mutexHandle, portMAX_DELAY);
-				disableTraffic_NS_Test();
-				activateTraffic_Test(EASTWEST, NORTH);
-				//xSemaphoreGive(mutexHandle);
+				disableTraffic_Test(T_NORTHSOUTH, P_WEST);
+				activateTraffic_Test(T_EASTWEST, P_NORTH);
+			// Congestion - Conduct almost same logic as forever loop
 			} else if ( (statusVehicle_E || statusVehicle_W ) && (statusVehicle_N || statusVehicle_S)) {
-				// Congestion - Conduct almost same logic as forever loop
-				//xSemaphoreTake(mutexHandle, portMAX_DELAY);
-				vTaskDelay(testingDelay2);
-				if (statusTraffic_NS == 1) {
-					disableTraffic_NS_Test();
-					activateTraffic_Test(EASTWEST, NORTH);
-					vTaskDelay(greenDelay);
+				if (statusTraffic_NS) {
+					disableTraffic_Test(T_NORTHSOUTH, P_WEST);
+					activateTraffic_Test(T_EASTWEST, P_NORTH);
 				} else {
-					disableTraffic_EW_Test();
-					activateTraffic_Test(NORTHSOUTH, WEST);
-					vTaskDelay(greenDelay);
+					disableTraffic_Test(T_EASTWEST, P_NORTH);
+					activateTraffic_Test(T_NORTHSOUTH, P_WEST);
 				}
-				//xSemaphoreGive(mutexHandle);
+				vTaskDelay(greenDelay); // Must be placed last, if not then redDelayMax logic will not work properly.
 			}
 			xSemaphoreGive(mutexHandle);
 		}
