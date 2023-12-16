@@ -108,28 +108,28 @@ uint8_t pendingTraffic = 0;
 /* Definitions for idleTask */
 osThreadId_t idleTaskHandle;
 const osThreadAttr_t idleTask_attributes = {
-		.name = "idleTask",
-		.stack_size = 128 * 4,
-		.priority = (osPriority_t) osPriorityNormal,
+  .name = "idleTask",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for pedestrianTask */
 osThreadId_t pedestrianTaskHandle;
 const osThreadAttr_t pedestrianTask_attributes = {
-		.name = "pedestrianTask",
-		.stack_size = 128 * 4,
-		.priority = (osPriority_t) osPriorityRealtime,
+  .name = "pedestrianTask",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityRealtime,
 };
 /* Definitions for trafficTask */
 osThreadId_t trafficTaskHandle;
 const osThreadAttr_t trafficTask_attributes = {
-		.name = "trafficTask",
-		.stack_size = 128 * 4,
-		.priority = (osPriority_t) osPriorityHigh,
+  .name = "trafficTask",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityHigh,
 };
 /* Definitions for mutex */
 osMutexId_t mutexHandle;
 const osMutexAttr_t mutex_attributes = {
-		.name = "mutex"
+  .name = "mutex"
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -144,51 +144,51 @@ void StartTraffic(void *argument);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /**
- * @brief  FreeRTOS initialization
- * @param  None
- * @retval None
- */
+  * @brief  FreeRTOS initialization
+  * @param  None
+  * @retval None
+  */
 void MX_FREERTOS_Init(void) {
-	/* USER CODE BEGIN Init */
+  /* USER CODE BEGIN Init */
 
-	/* USER CODE END Init */
-	/* Create the mutex(es) */
-	/* creation of mutex */
-	mutexHandle = osMutexNew(&mutex_attributes);
+  /* USER CODE END Init */
+  /* Create the mutex(es) */
+  /* creation of mutex */
+  mutexHandle = osMutexNew(&mutex_attributes);
 
-	/* USER CODE BEGIN RTOS_MUTEX */
+  /* USER CODE BEGIN RTOS_MUTEX */
 	/* add mutexes, ... */
-	/* USER CODE END RTOS_MUTEX */
+  /* USER CODE END RTOS_MUTEX */
 
-	/* USER CODE BEGIN RTOS_SEMAPHORES */
+  /* USER CODE BEGIN RTOS_SEMAPHORES */
 	/* add semaphores, ... */
-	/* USER CODE END RTOS_SEMAPHORES */
+  /* USER CODE END RTOS_SEMAPHORES */
 
-	/* USER CODE BEGIN RTOS_TIMERS */
+  /* USER CODE BEGIN RTOS_TIMERS */
 	/* start timers, add new ones, ... */
-	/* USER CODE END RTOS_TIMERS */
+  /* USER CODE END RTOS_TIMERS */
 
-	/* USER CODE BEGIN RTOS_QUEUES */
+  /* USER CODE BEGIN RTOS_QUEUES */
 	/* add queues, ... */
-	/* USER CODE END RTOS_QUEUES */
+  /* USER CODE END RTOS_QUEUES */
 
-	/* Create the thread(s) */
-	/* creation of idleTask */
-	idleTaskHandle = osThreadNew(StartIdle, NULL, &idleTask_attributes);
+  /* Create the thread(s) */
+  /* creation of idleTask */
+  idleTaskHandle = osThreadNew(StartIdle, NULL, &idleTask_attributes);
 
-	/* creation of pedestrianTask */
-	pedestrianTaskHandle = osThreadNew(StartPedestrian, NULL, &pedestrianTask_attributes);
+  /* creation of pedestrianTask */
+  pedestrianTaskHandle = osThreadNew(StartPedestrian, NULL, &pedestrianTask_attributes);
 
-	/* creation of trafficTask */
-	trafficTaskHandle = osThreadNew(StartTraffic, NULL, &trafficTask_attributes);
+  /* creation of trafficTask */
+  trafficTaskHandle = osThreadNew(StartTraffic, NULL, &trafficTask_attributes);
 
-	/* USER CODE BEGIN RTOS_THREADS */
+  /* USER CODE BEGIN RTOS_THREADS */
 	/* add threads, ... */
-	/* USER CODE END RTOS_THREADS */
+  /* USER CODE END RTOS_THREADS */
 
-	/* USER CODE BEGIN RTOS_EVENTS */
+  /* USER CODE BEGIN RTOS_EVENTS */
 	/* add events, ... */
-	/* USER CODE END RTOS_EVENTS */
+  /* USER CODE END RTOS_EVENTS */
 
 }
 
@@ -201,7 +201,7 @@ void MX_FREERTOS_Init(void) {
 /* USER CODE END Header_StartIdle */
 void StartIdle(void *argument)
 {
-	/* USER CODE BEGIN StartIdle */
+  /* USER CODE BEGIN StartIdle */
 	/* Infinite loop */
 	while(1)
 	{
@@ -259,7 +259,7 @@ void StartIdle(void *argument)
 #endif
 		osDelay(1);
 	}
-	/* USER CODE END StartIdle */
+  /* USER CODE END StartIdle */
 }
 
 /* USER CODE BEGIN Header_StartPedestrian */
@@ -271,7 +271,7 @@ void StartIdle(void *argument)
 /* USER CODE END Header_StartPedestrian */
 void StartPedestrian(void *argument)
 {
-	/* USER CODE BEGIN StartPedestrian */
+  /* USER CODE BEGIN StartPedestrian */
 	/* Infinite loop */
 	for(;;)
 	{
@@ -289,7 +289,7 @@ void StartPedestrian(void *argument)
 #endif
 		osDelay(1);
 	}
-	/* USER CODE END StartPedestrian */
+  /* USER CODE END StartPedestrian */
 }
 
 /* USER CODE BEGIN Header_StartTraffic */
@@ -301,7 +301,7 @@ void StartPedestrian(void *argument)
 /* USER CODE END Header_StartTraffic */
 void StartTraffic(void *argument)
 {
-	/* USER CODE BEGIN StartTraffic */
+  /* USER CODE BEGIN StartTraffic */
 	/* Infinite loop */
 	while(1)
 	{
@@ -404,7 +404,7 @@ void StartTraffic(void *argument)
 #endif
 		osDelay(1);
 	}
-	/* USER CODE END StartTraffic */
+  /* USER CODE END StartTraffic */
 }
 
 /* Private application code --------------------------------------------------*/

@@ -63,7 +63,6 @@ void Error_Handler(void);
 #define USART_RX_GPIO_Port GPIOA
 #define TL1_Car_Pin GPIO_PIN_4
 #define TL1_Car_GPIO_Port GPIOC
-#define TL1_Car_EXTI_IRQn EXTI4_IRQn
 #define IC595_STCP_Pin GPIO_PIN_12
 #define IC595_STCP_GPIO_Port GPIOB
 #define TL2_Car_Pin GPIO_PIN_13
