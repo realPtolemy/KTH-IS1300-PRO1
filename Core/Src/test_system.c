@@ -57,11 +57,11 @@ void init_Test(){
 }
 
 void activateTraffic_NS_Test() {
-	trafficLight_Test(RED);
-	trafficLight_Test(ORANGE);
+	trafficLight_Test(RED, T_NORTHSOUTH);
+	trafficLight_Test(ORANGE, T_NORTHSOUTH);
 	vTaskDelay(orangeDelay);
 	pedestrianLight_Test(GREEN, P_WEST);
-	trafficLight_Test(GREEN);
+	trafficLight_Test(GREEN, T_NORTHSOUTH);
 	statusTraffic_NS = 1;
 }
 

@@ -39,6 +39,7 @@ void trafficLight(enum LED status, enum Street t_dir);
 void pedestrianLight(enum LED status, enum Street p_dir);
 void pedestrianWarning(enum Street p_dir);
 void pedestrianPending(enum Street p_dir);
+void pedestrianReset(enum Street p_dir);
 
 // Traffic logic
 //void checkTraffic(void);

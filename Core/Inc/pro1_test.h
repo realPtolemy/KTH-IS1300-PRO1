@@ -61,6 +61,12 @@ void pedestrianWarning_N_Test(void);
 void pedestrianWarning_W_Test(void);
 void pedestrianPending_N_Test(void);
 void pedestrianPending_W_Test(void);
+void trafficLight_Test(enum LED status, enum Street t_dir);
+void pedestrianLight_Test(enum LED status, enum Street p_dir);
+void pedestrianPending_Test(enum Street p_dir);
+void pedestrianWarning_Test(enum Street p_dir);
+void pedestrianReset_Test(enum Street p_dir);
+
 
 // Activate and dissable traffic or pedestrian crossings
 void activateTraffic_NS_Test(void);

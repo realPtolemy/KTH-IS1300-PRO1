@@ -359,12 +359,20 @@ void pedestrianLight_Test(enum LED status, enum Street p_dir){
 	case GREEN:	// Set the lights GREEN
 		// Bitwise-OR merge masked current states with new states for NORTH pedestrian and SOUTH traffic lights
 		REG[p_dir] = REG[p_dir] | 0b010000; // Set NORTH pedestrian light bit to GREEN
-		statusPedestrian_N = 1;
+		if (p_dir == P_NORTH) {
+			statusPedestrian_N = 1;
+		} else {
+			statusPedestrian_W = 1;
+		}
 		break;
 	case RED: // Set the lights RED
 		// Bitwise-OR merge masked current states with new states for NORTH pedestrian and SOUTH traffic lights
 		REG[p_dir] = REG[p_dir] | 0b001000; // Set NORTH pedestrian light bit to RED
-		statusPedestrian_N = 0;
+		if (p_dir == P_NORTH) {
+			statusPedestrian_N = 0;
+		} else {
+			statusPedestrian_W = 0;
+		}
 		break;
 	}
 	setReg_Test();
@@ -391,4 +399,8 @@ void pedestrianWarning_Test(enum Street p_dir){
 		REG[p_dir] = REG[p_dir] | 0b010000; // Set NORTH pedestrian light bit to GREEN
 	}
 	setReg_Test();
+}
+
+void pedestrianReset_Test(enum Street p_dir){
+	REG[p_dir] = REG[p_dir] & 0b011111;
 }
