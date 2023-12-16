@@ -11,6 +11,7 @@
 
 /*** Defined enumerations ***/
 // Traffic light color enumeration
+/*
 enum LED {
 	RED,
 	ORANGE,
@@ -26,8 +27,7 @@ enum Street {
 	P_WEST = 0,
 
 };
-
-
+*/
 /*** Defined Functions ***/
 // LED functions - test_led.c
 void trafficLED_Test_NS(void);

@@ -1,10 +1,9 @@
 /*
- * functions_gpio.c
+ * functions_input.c
  *
  *  Created on: Dec 15, 2023
  *      Author: Love Mitteregger
  */
-
 #include "pro1_funct.h"
 #include "spi.h"
 #include "gpio.h"

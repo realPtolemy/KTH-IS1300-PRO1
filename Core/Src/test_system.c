@@ -15,6 +15,7 @@
 #include "cmsis_os.h"
 
 extern uint8_t REG[];
+extern const TickType_t sysDelay;
 extern const TickType_t toggleFreq;
 extern const TickType_t greenDelay;
 extern const TickType_t orangeDelay;
@@ -189,7 +190,7 @@ void staticTraffic_Test(){
 		}
 		trafficLight_Test(GREEN, T_EASTWEST);
 		pedestrianLight_Test(GREEN, P_NORTH);
-		vTaskDelay(testingDelay2);
+		vTaskDelay(sysDelay);
 		checkTraffic_Test();
 	}
 	while(statusVehicle_N || statusVehicle_S) {
@@ -199,7 +200,7 @@ void staticTraffic_Test(){
 		}
 		trafficLight_Test(GREEN, T_NORTHSOUTH);
 		pedestrianLight_Test(GREEN, P_WEST);
-		vTaskDelay(testingDelay2);
+		vTaskDelay(sysDelay);
 		checkTraffic_Test();
 	}
 }

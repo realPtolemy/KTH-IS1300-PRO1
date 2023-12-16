@@ -9,6 +9,25 @@
 #ifndef INC_IS1300_H_
 #define INC_IS1300_H_
 
+/*** Defined enumerations ***/
+// Traffic light color enumeration
+enum LED {
+	RED,
+	ORANGE,
+	GREEN,
+	BLUE
+};
+
+// Street direction enumeration
+enum Street {
+	T_NORTHSOUTH,
+	T_EASTWEST,
+	P_NORTH = 1,
+	P_WEST = 0,
+
+};
+
+/*** Defined Functions ***/
 // System Initialization
 void system_init(void);
 
@@ -16,23 +35,16 @@ void system_init(void);
 void stageReg(void);
 void latchReg(void);
 void setReg(void);
-void traffic_NS(uint8_t status);
-void traffic_EW(uint8_t status);
-void pedestrian_N(uint8_t status);
-void pedestrian_W(uint8_t status);
-void pedestrianWarning_N(void);
-void pedestrianWarning_W(void);
-void pedestrianPending_N(void);
-void pedestrianPending_W(void);
+void trafficLight(enum LED status, enum Street t_dir);
+void pedestrianLight(enum LED status, enum Street p_dir);
+void pedestrianWarning(enum Street p_dir);
+void pedestrianPending(enum Street p_dir);
 
 // Traffic logic
 //void checkTraffic(void);
-void activateTraffic_NS(void);
-void disableTraffic_NS(void);
-void activateTraffic_EW(void);
-void disableTraffic_EW(void);
-void staticTraffic_NS(void);
-void staticTraffic_EW(void);
+void activateTraffic(enum Street t_dir, enum Street p_dir);
+void disableTraffic(enum Street t_dir, enum Street p_dir);
+void staticTraffic(void);
 
 // Read traffic from switches
 uint8_t checkTraffic(void);

@@ -10,6 +10,7 @@
 #include "gpio.h"
 #include "FreeRTOS.h"
 
+extern const TickType_t sysDelay;
 extern const TickType_t toggleFreq;
 extern const TickType_t pedestrianDelay;
 extern const TickType_t safetyDelay;
@@ -31,82 +32,52 @@ extern volatile uint8_t statusVehicle_S;
 extern volatile uint8_t statusVehicle_E;
 extern volatile uint8_t statusVehicle_W;
 
-void activateTraffic_NS() {
-	traffic_NS(3);
-	traffic_NS(2);
-	vTaskDelay( orangeDelay );
-	pedestrian_W(1);
-	traffic_NS(1);
-	statusTraffic_NS = 1;
+void activateTraffic(enum Street t_dir, enum Street p_dir){
+	trafficLight(RED, t_dir);
+	trafficLight(ORANGE, t_dir);
+	vTaskDelay(orangeDelay);
+	pedestrianLight(GREEN, p_dir);
+	trafficLight(GREEN, t_dir);
 }
 
-void disableTraffic_NS() {
-	traffic_NS(1);
+void disableTraffic(enum Street t_dir, enum Street p_dir){
+	trafficLight(GREEN, t_dir);
 	startTime = xTaskGetTickCount();
 	while (elapsedTime < orangeDelay ) {
-		pedestrianWarning_W();
+		pedestrianWarning(p_dir);
 		endTime = xTaskGetTickCount();
 		elapsedTime = endTime -  startTime;
 		vTaskDelay( toggleFreq );
 	}
 	elapsedTime = 0;
-	pedestrian_W(2);
-	vTaskDelay( safetyDelay );
-	traffic_NS(2);
-	vTaskDelay( orangeDelay );
-	traffic_NS(3);
+	pedestrianLight(RED, p_dir);
+	vTaskDelay(safetyDelay);
+	trafficLight(ORANGE, t_dir);
+	vTaskDelay(orangeDelay);
+	trafficLight(RED, t_dir);
 	statusTraffic_NS = 0;
 	vTaskDelay(safetyDelay);
 }
 
-void activateTraffic_EW() {
-	traffic_EW(3);
-	traffic_EW(2);
-	vTaskDelay( orangeDelay );
-	pedestrian_N(1);
-	traffic_EW(1);
-	statusTraffic_EW = 1;
-}
-
-void disableTraffic_EW() {
-	traffic_EW(1);
-	startTime = xTaskGetTickCount();
-	while (elapsedTime < orangeDelay ) {
-		pedestrianWarning_N();
-		endTime = xTaskGetTickCount();
-		elapsedTime = endTime -  startTime;
-		vTaskDelay( toggleFreq );
-	}
-	elapsedTime = 0;
-	pedestrian_N(2);
-	vTaskDelay( safetyDelay );
-	traffic_EW(2);
-	vTaskDelay( orangeDelay );
-	traffic_EW(3);
-	statusTraffic_EW = 0;
-	vTaskDelay(safetyDelay);
-}
-
-void staticTraffic_NS(){
-	while(statusVehicle_N || statusVehicle_S) {
-		if(statusVehicle_E || statusVehicle_W) {
-			vTaskDelay( redDelayMax );
-			break;
-		}
-		traffic_NS(1);
-		pedestrian_W(1);
-		checkTraffic();
-	}
-}
-
-void staticTraffic_EW(){
+void staticTraffic(){
 	while(statusVehicle_E || statusVehicle_W) {
 		if(statusVehicle_N || statusVehicle_S) {
-			vTaskDelay( redDelayMax );
+			vTaskDelay(redDelayMax);
 			break;
 		}
-		traffic_EW(1);
-		pedestrian_N(1);
+		trafficLight(GREEN, T_EASTWEST);
+		pedestrianLight(GREEN, P_NORTH);
+		vTaskDelay(sysDelay);
+		checkTraffic();
+	}
+	while(statusVehicle_N || statusVehicle_S) {
+		if(statusVehicle_E || statusVehicle_W) {
+			vTaskDelay(redDelayMax);
+			break;
+		}
+		trafficLight(GREEN, T_NORTHSOUTH);
+		pedestrianLight(GREEN, P_WEST);
+		vTaskDelay(sysDelay);
 		checkTraffic();
 	}
 }
