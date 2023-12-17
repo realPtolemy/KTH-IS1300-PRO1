@@ -56,12 +56,13 @@
 const TickType_t sysDelay = pdMS_TO_TICKS(500);			// used to avoid mutex hickup
 const TickType_t toggleFreq = pdMS_TO_TICKS(250);		// arguments is ms, then coverted to ticks
 const TickType_t walkingDelay = pdMS_TO_TICKS(17000);	// Real life ?? ms
+const TickType_t pedestrianDelay = pdMS_TO_TICKS(3000);
 const TickType_t safetyDelay = pdMS_TO_TICKS(3000);		// Real life ~6000 ms
 const TickType_t greenDelay = pdMS_TO_TICKS(8000); 		// Real life ~47000 ms
 const TickType_t orangeDelay = pdMS_TO_TICKS(2500); 	// Real life ~5000 ms
 const TickType_t redDelayMax = pdMS_TO_TICKS(500);		// Real life ?? ms
 const TickType_t testingDelay = pdMS_TO_TICKS(500); // ms to ticks
-const TickType_t testingDelay2 = pdMS_TO_TICKS(800); // ms to ticks
+const TickType_t testingDelay2 = pdMS_TO_TICKS(80000); // ms to ticks
 
 TickType_t startTime;
 TickType_t endTime;
@@ -86,7 +87,8 @@ uint8_t testVar = 1;
 #else
 const TickType_t sysDelay = pdMS_TO_TICKS(500);			// used to avoid mutex hickup
 const TickType_t toggleFreq = pdMS_TO_TICKS(250);		// arguments is ms, then coverted to ticks
-const TickType_t walkingDelay = pdMS_TO_TICKS(10000);	// Real life ?? ms
+const TickType_t walkingDelay = pdMS_TO_TICKS(17000);	// Real life ?? ms
+const TickType_t pedestrianDelay = pdMS_TO_TICKS(3000);
 const TickType_t safetyDelay = pdMS_TO_TICKS(3000);		// Real life ~6000 ms
 const TickType_t greenDelay = pdMS_TO_TICKS(8000); 		// Real life ~47000 ms
 const TickType_t orangeDelay = pdMS_TO_TICKS(2500); 	// Real life ~5000 ms
@@ -230,13 +232,14 @@ void StartIdle(void *argument)
 
 #ifdef RUN_TEST_IDLE
 		if( !pendingTraffic ) {
-			if (statusTraffic_NS) {
+			if (statusTraffic_NS && (!buttonWestFlag || !buttonNorthFlag)) {
 				xSemaphoreTake(mutexHandle, 0);
 				disableTraffic_Test(T_NORTHSOUTH, P_WEST);
 				xSemaphoreGive(mutexHandle);
 				vTaskDelay(testingDelay);
 				xSemaphoreTake(mutexHandle, portMAX_DELAY);
-				if (!statusTraffic_NS) {
+				if (!statusTraffic_NS && (!buttonWestFlag)) {
+					pedestrianPending_Test(P_NORTH);
 					activateTraffic_Test(T_EASTWEST, P_NORTH);
 				}
 				xSemaphoreGive(mutexHandle);
@@ -246,7 +249,7 @@ void StartIdle(void *argument)
 				xSemaphoreGive(mutexHandle);
 				vTaskDelay( testingDelay );
 				xSemaphoreTake(mutexHandle, portMAX_DELAY);
-				if (!statusTraffic_EW) {
+				if (!statusTraffic_EW && (!buttonNorthFlag)) {
 					activateTraffic_Test(T_NORTHSOUTH, P_WEST);
 				}
 				xSemaphoreGive(mutexHandle);
@@ -393,7 +396,6 @@ void StartTraffic(void *argument)
 		if ( pendingTraffic ) {
 			//vTaskDelay(testingDelay);
 			xSemaphoreTake(mutexHandle, portMAX_DELAY);
-
 			// If all roads are red, and a vehicle appears from ONE direction
 			if ( (!statusTraffic_NS && !statusTraffic_EW) && (statusVehicle_N || statusVehicle_S) && (!statusVehicle_E && !statusVehicle_W)) {
 				activateTraffic_Test(T_NORTHSOUTH, P_WEST);
@@ -504,7 +506,7 @@ void StartPedestrianB(void *argument)
   {
 #ifdef RUN_TEST_PEDESTRIAN
 	  vTaskDelay(testingDelay);
-	  if (buttonWestFlag && !statusPedestrian_W && statusPedestrian_N) {
+	  if (buttonWestFlag && statusPedestrian_N && !statusPedestrian_W) {
 		  while (!statusPedestrian_W && statusPedestrian_N) {
 			  pedestrianPending_Test(P_WEST);
 			  vTaskDelay( toggleFreq );
@@ -518,6 +520,9 @@ void StartPedestrianB(void *argument)
 			  xSemaphoreGive(buttonMutexHandle);
 			  vTaskDelay( toggleFreq );
 		  }
+		  vTaskDelay(pedestrianDelay);
+		  disableTraffic_Test(T_EASTWEST, P_NORTH);
+		  activateTraffic_Test(T_NORTHSOUTH, P_WEST);
 		  pedestrianReset_Test(P_WEST);
 		  startTime = xTaskGetTickCount();
 		  pedestrianLight(GREEN, P_WEST);
