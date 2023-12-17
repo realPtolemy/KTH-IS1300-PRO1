@@ -24,9 +24,15 @@ extern const TickType_t pedestrianDelay;
 extern const TickType_t safetyDelay;
 extern const TickType_t testingDelay2;
 
-extern TickType_t startTime;
-extern TickType_t endTime;
-extern TickType_t elapsedTime;
+extern long startTime;
+extern long endTime;
+extern long elapsedTime;
+
+//TickType_t = xLastWakeTime;
+//const TickType_t xFrequency = pdMS_TO_TICKS(2500);
+
+extern volatile uint8_t buttonNorthFlag;
+extern volatile uint8_t buttonWestFlag;
 
 extern uint8_t statusTraffic_NS;
 extern uint8_t statusTraffic_EW;
@@ -165,14 +171,10 @@ void activateTraffic_Test(enum Street t_dir, enum Street p_dir) {
 
 void disableTraffic_Test(enum Street t_dir, enum Street p_dir) {
 	trafficLight_Test(GREEN, t_dir);
-	startTime = xTaskGetTickCount();
-	while (elapsedTime < orangeDelay ) {
-		pedestrianWarning_Test(p_dir);
-		endTime = xTaskGetTickCount();
-		elapsedTime = endTime -  startTime;
-		vTaskDelay( toggleFreq );
+	for(uint8_t i = 0; i < 10; i++) {
+		pedestrianWarning(p_dir);
+		vTaskDelay(toggleFreq);
 	}
-	elapsedTime = 0;
 	pedestrianLight_Test(RED, p_dir);
 	vTaskDelay(safetyDelay);
 	trafficLight_Test(ORANGE, t_dir);
@@ -184,7 +186,10 @@ void disableTraffic_Test(enum Street t_dir, enum Street p_dir) {
 
 void staticTraffic_Test(){
 	while(statusVehicle_E || statusVehicle_W) {
-		if(statusVehicle_N || statusVehicle_S) {
+		if(buttonWestFlag) {
+			vTaskDelay(pedestrianDelay);
+			break;
+		} else if(statusVehicle_N || statusVehicle_S) {
 			vTaskDelay(redDelayMax);
 			break;
 		}
@@ -194,7 +199,10 @@ void staticTraffic_Test(){
 		checkTraffic_Test();
 	}
 	while(statusVehicle_N || statusVehicle_S) {
-		if(statusVehicle_E || statusVehicle_W) {
+		if(buttonNorthFlag) {
+			vTaskDelay(pedestrianDelay);
+			break;
+		} else if(statusVehicle_E || statusVehicle_W) {
 			vTaskDelay(redDelayMax);
 			break;
 		}

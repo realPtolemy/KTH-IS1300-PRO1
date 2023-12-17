@@ -11,9 +11,13 @@
 #include "spi.h"
 #include "usart.h"
 #include "gpio.h"
+#include "FreeRTOS.h"
 
 uint8_t togglePedestrianGreen;
 uint8_t togglePedestrianBlue;
+
+extern uint8_t buttonNorthFlag;
+extern uint8_t buttonWestFlag;
 
 extern uint8_t statusVehicle_N;
 extern uint8_t statusVehicle_S;
@@ -24,6 +28,20 @@ extern uint8_t statusTraffic_NS;
 extern uint8_t statusTraffic_EW;
 extern uint8_t statusPedestrian_N;
 extern uint8_t statusPedestrian_W;
+
+extern long startTime;
+extern long endTime;
+extern long elapsedTime;
+
+extern const TickType_t sysDelay;
+extern const TickType_t toggleFreq;
+extern const TickType_t pedestrianDelay;
+extern const TickType_t walkingDelay;
+extern const TickType_t safetyDelay;
+extern const TickType_t greenDelay;
+extern const TickType_t orangeDelay;
+extern const TickType_t redDelayMax;
+
 
 
 // Test function for north and south traffic lights
@@ -370,8 +388,10 @@ void pedestrianLight_Test(enum LED status, enum Street p_dir){
 		REG[p_dir] = REG[p_dir] | 0b001000; // Set NORTH pedestrian light bit to RED
 		if (p_dir == P_NORTH) {
 			statusPedestrian_N = 0;
+			buttonNorthFlag = 0;
 		} else {
 			statusPedestrian_W = 0;
+			buttonWestFlag = 0;
 		}
 		break;
 	}

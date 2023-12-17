@@ -15,7 +15,9 @@ enum LED {
 	RED,
 	ORANGE,
 	GREEN,
-	BLUE
+	BLUE,
+	HOLD,
+	//RESET,
 };
 
 // Street direction enumeration

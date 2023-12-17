@@ -13,14 +13,18 @@
 extern const TickType_t sysDelay;
 extern const TickType_t toggleFreq;
 extern const TickType_t pedestrianDelay;
+extern const TickType_t walkingDelay;
 extern const TickType_t safetyDelay;
 extern const TickType_t greenDelay;
 extern const TickType_t orangeDelay;
 extern const TickType_t redDelayMax;
 
-extern TickType_t startTime;
-extern TickType_t endTime;
-extern TickType_t elapsedTime;
+extern long startTime;
+extern long endTime;
+extern long elapsedTime;
+
+extern uint8_t buttonNorthFlag;
+extern uint8_t buttonWestFlag;
 
 extern uint8_t statusTraffic_NS;
 extern uint8_t statusTraffic_EW;
@@ -42,14 +46,10 @@ void activateTraffic(enum Street t_dir, enum Street p_dir){
 
 void disableTraffic(enum Street t_dir, enum Street p_dir){
 	trafficLight(GREEN, t_dir);
-	startTime = xTaskGetTickCount();
-	while (elapsedTime < orangeDelay ) {
+	for(uint8_t i = 0; i < 10; i++) {
 		pedestrianWarning(p_dir);
-		endTime = xTaskGetTickCount();
-		elapsedTime = endTime -  startTime;
-		vTaskDelay( toggleFreq );
+		vTaskDelay(toggleFreq);
 	}
-	elapsedTime = 0;
 	pedestrianLight(RED, p_dir);
 	vTaskDelay(safetyDelay);
 	trafficLight(ORANGE, t_dir);
