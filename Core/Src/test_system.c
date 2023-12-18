@@ -56,8 +56,8 @@ void init_Test(){
 	REG[1] = 0b001100;  // Bits to control TL2 and PL2 - SOUTH TL Green & NORTH Red
 	REG[0] = 0b010001;  // Bits to control TL1 and PL1 - WEST TL Red & WEST PL Green
 
-	stageReg();  // Stage the newly set bits to the shift register
-	latchReg();  // Latch the staged bits to shift register storage for output
+	//stageReg();  // Stage the newly set bits to the shift register
+	//latchReg();  // Latch the staged bits to shift register storage for output
 
 	HAL_Delay(5000); // Delay for us humans to realize that things have happened
 }

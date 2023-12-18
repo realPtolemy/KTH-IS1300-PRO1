@@ -31,11 +31,10 @@ void system_init(){
 
 	// Set shift register bits high for the LEDs that should light up at initialization
 	REG[2] = 0b100001;  // Bits to control TL4 and TL3 - NORTH TL Green & EAST TL Red
-	REG[1] = 0b001100;  // Bits to control TL2 and PL2 - SOUTH TL Green & NORTH Red
+	REG[1] = 0b001100;  // Bits to control TL2 and PL2 - SOUTH TL Green & NORTH PL Red
 	REG[0] = 0b010001;  // Bits to control TL1 and PL1 - WEST TL Red & WEST PL Green
 
-	stageReg();  // Stage the newly set bits to the shift register
-	latchReg();  // Latch the staged bits to shift register storage for output
+	setReg();
 
 	HAL_Delay(5000);
 }

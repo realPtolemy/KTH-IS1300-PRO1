@@ -26,6 +26,7 @@ extern uint8_t statusTraffic_NS;
 extern uint8_t statusTraffic_EW;
 extern uint8_t statusPedestrian_N;
 extern uint8_t statusPedestrian_W;
+extern uint8_t lastActive_NS;
 
 extern long startTime;
 extern long endTime;
@@ -40,6 +41,7 @@ extern const TickType_t greenDelay;
 extern const TickType_t orangeDelay;
 extern const TickType_t redDelayMax;
 
+/* NOT IN USE - PRIMARILY USED FOR TESTING
 // Stage the shift register with new bits
 void stageReg(){
 	HAL_SPI_Transmit(&hspi3, &REG[2], 1, HAL_MAX_DELAY);
@@ -52,7 +54,9 @@ void latchReg(){
 	HAL_GPIO_WritePin(IC595_STCP_GPIO_Port, IC595_STCP_Pin, GPIO_PIN_SET);
 	HAL_GPIO_WritePin(IC595_STCP_GPIO_Port, IC595_STCP_Pin, GPIO_PIN_RESET);
 }
+*/
 
+// Stage and Latch in same function
 void setReg(){
 	HAL_SPI_Transmit(&hspi3, &REG[2], 1, HAL_MAX_DELAY);
 	HAL_SPI_Transmit(&hspi3, &REG[1], 1, HAL_MAX_DELAY);
@@ -74,6 +78,7 @@ void trafficLight(enum LED status, enum Street t_dir){
 			REG[2] = REG[2] | 0b100000; // Set NORTH traffic light bit to GREEN
 			REG[1] = REG[1] | 0b000100; // Set SOUTH traffic light bit to GREEN
 			statusTraffic_NS = 1;
+			lastActive_NS = 1;
 			break;
 		case ORANGE: // Set the lights YELLOW
 			// Bitwise-OR merge masked current states with new states for NORTH and SOUTH traffic lights
@@ -98,6 +103,7 @@ void trafficLight(enum LED status, enum Street t_dir){
 				REG[2] = REG[2] | 0b000100; // Set EAST traffic light bit to GREEN
 				REG[0] = REG[0] | 0b000100; // Set WEST traffic light bit to GREEN
 				statusTraffic_EW = 1;
+				lastActive_NS = 0;
 				break;
 			case ORANGE: // Set the lights YELLOW
 				// Bitwise-OR merge masked current states with new states for EAST and WEST traffic lights
@@ -112,7 +118,7 @@ void trafficLight(enum LED status, enum Street t_dir){
 				break;
 		}
 	}
-	setReg_Test();
+	setReg();
 }
 
 // Change PEDESTRIAN lights
@@ -126,36 +132,24 @@ void pedestrianLight(enum LED status, enum Street p_dir){
 		REG[p_dir] = REG[p_dir] | 0b010000; // Set NORTH pedestrian light bit to GREEN
 		if (p_dir == P_NORTH) {
 			statusPedestrian_N = 1;
+			buttonNorthFlag = 0;
 		} else {
 			statusPedestrian_W = 1;
+			buttonWestFlag = 0;
 		}
-		break;
-	case HOLD: // Hold the lights GREEN
-		// Bitwise-OR merge masked current states with new states for NORTH pedestrian and SOUTH traffic lights
-		REG[p_dir] = REG[p_dir] | 0b010000; // Set NORTH pedestrian light bit to GREEN
-		if (p_dir == P_NORTH) {
-		statusPedestrian_N = 1;
-		} else {
-		statusPedestrian_W = 1;
-		}
-		//vTaskDelay(walkingDelay);
 		break;
 	case RED: // Set the lights RED
 		// Bitwise-OR merge masked current states with new states for NORTH pedestrian and SOUTH traffic lights
 		REG[p_dir] = REG[p_dir] | 0b001000; // Set NORTH pedestrian light bit to RED
 		if (p_dir == P_NORTH) {
 			statusPedestrian_N = 0;
-			buttonNorthFlag = 0;
 		} else {
 			statusPedestrian_W = 0;
-			buttonWestFlag = 0;
 		}
 		break;
 	}
-	setReg_Test();
+	setReg();
 }
-
-
 
 // Activate PEDESTRIAN BLUE lights
 void pedestrianPending(enum Street p_dir){
@@ -166,7 +160,7 @@ void pedestrianPending(enum Street p_dir){
 	} else {
 		REG[p_dir] = REG[p_dir] | 0b100000;
 	}
-	setReg_Test();
+	setReg();
 }
 
 // Activate PEDESTRIAN GREEN WARNING lights
@@ -177,7 +171,10 @@ void pedestrianWarning(enum Street p_dir){
 	} else {
 		REG[p_dir] = REG[p_dir] | 0b010000; // Set NORTH pedestrian light bit to GREEN
 	}
-	setReg_Test();
+	setReg();
 }
 
-
+void pedestrianReset(enum Street p_dir){
+	REG[p_dir] = REG[p_dir] & 0b011111;
+	setReg();
+}

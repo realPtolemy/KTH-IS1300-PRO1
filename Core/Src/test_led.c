@@ -314,7 +314,11 @@ void pedestrianPending_W_Test(){
 	setReg_Test();
 }
 
-/* Change NORTH & SOUTH TRAFFIC lights */
+
+// OLD FUNCTIONS ABOVE THIS COMMENT
+
+
+// Change NORTH & SOUTH TRAFFIC lights
 void trafficLight_Test(enum LED status, enum Street t_dir){
 	if(t_dir == T_NORTHSOUTH) {
 		// Start by masking and storing the state of all other traffic lights
@@ -368,7 +372,7 @@ void trafficLight_Test(enum LED status, enum Street t_dir){
 	setReg_Test();
 }
 
-/* Change PEDESTRIAN lights */
+// Change PEDESTRIAN lights
 void pedestrianLight_Test(enum LED status, enum Street p_dir){
 	// Start by masking and storing the state of all other lights
 	REG[p_dir] = REG[p_dir] & 0b100111;	// Mask current traffic lights at SOUTH, clear RED and GREEN pedestrian lights at NORTH
@@ -398,7 +402,7 @@ void pedestrianLight_Test(enum LED status, enum Street p_dir){
 	setReg_Test();
 }
 
-/* Activate PEDESTRIAN BLUE lights */
+// Activate PEDESTRIAN BLUE lights
 void pedestrianPending_Test(enum Street p_dir){
 	// Start by masking and storing the state of all other lights
 	togglePedestrianBlue = REG[p_dir] & 0b100000;
@@ -410,7 +414,7 @@ void pedestrianPending_Test(enum Street p_dir){
 	setReg_Test();
 }
 
-/* Activate PEDESTRIAN GREEN WARNING lights */
+// Activate PEDESTRIAN GREEN WARNING lights
 void pedestrianWarning_Test(enum Street p_dir){
 	togglePedestrianGreen = REG[p_dir] & 0b010000; // Mask the pedestrian bit
 	if(togglePedestrianGreen) {

@@ -32,11 +32,11 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-#define RUN_TEST_PROGRAM
-#define RUN_TEST_IDLE
-#define RUN_TEST_PEDESTRIAN
-#define RUN_TEST_TRAFFIC
-#define RUN_TEST_TOGGLE
+//#define RUN_TEST_PROGRAM
+//#define RUN_TEST_IDLE
+//#define RUN_TEST_PEDESTRIAN
+//#define RUN_TEST_TRAFFIC
+//#define RUN_TEST_TOGGLE
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -56,7 +56,7 @@
 // Required program delays, in ms.
 const TickType_t sysDelay = pdMS_TO_TICKS(800);			// used to avoid mutex hickup
 const TickType_t toggleFreq = pdMS_TO_TICKS(250);		// arguments is ms, then coverted to ticks
-const TickType_t walkingDelay = pdMS_TO_TICKS(3000);	// Real life ?? ms 3 for testing 17 for simulating
+const TickType_t walkingDelay = pdMS_TO_TICKS(12000);	// Real life ?? ms 3 for testing 17 for simulating
 const TickType_t pedestrianDelay = pdMS_TO_TICKS(3000);
 const TickType_t safetyDelay = pdMS_TO_TICKS(3000);		// Real life ~6000 ms
 const TickType_t greenDelay = pdMS_TO_TICKS(8000); 		// Real life ~47000 ms
@@ -72,10 +72,10 @@ long elapsedTime;
 extern volatile uint8_t buttonNorthFlag;
 extern volatile uint8_t buttonWestFlag;
 
-volatile uint8_t statusTraffic_NS = 1;
-volatile uint8_t statusTraffic_EW = 0;
 volatile uint8_t statusPedestrian_N = 0;
 volatile uint8_t statusPedestrian_W = 1;
+volatile uint8_t statusTraffic_NS = 1;
+volatile uint8_t statusTraffic_EW = 0;
 
 volatile uint8_t statusVehicle_N = 0;
 volatile uint8_t statusVehicle_S = 0;
@@ -86,29 +86,35 @@ uint8_t pendingTraffic = 0;
 uint8_t testVar = 1;
 
 #else
-const TickType_t sysDelay = pdMS_TO_TICKS(500);			// used to avoid mutex hickup
+const TickType_t sysDelay = pdMS_TO_TICKS(800);			// used to avoid system hickup
+const TickType_t mutexDelay = pdMS_TO_TICKS(500);		// used to avoid mutex hickup
 const TickType_t toggleFreq = pdMS_TO_TICKS(250);		// arguments is ms, then coverted to ticks
-const TickType_t walkingDelay = pdMS_TO_TICKS(17000);	// Real life ?? ms
+const TickType_t walkingDelay = pdMS_TO_TICKS(3000);	// Real life ?? ms 3 for testing 17 for simulating
 const TickType_t pedestrianDelay = pdMS_TO_TICKS(3000);
 const TickType_t safetyDelay = pdMS_TO_TICKS(3000);		// Real life ~6000 ms
 const TickType_t greenDelay = pdMS_TO_TICKS(8000); 		// Real life ~47000 ms
 const TickType_t orangeDelay = pdMS_TO_TICKS(2500); 	// Real life ~5000 ms
 const TickType_t redDelayMax = pdMS_TO_TICKS(500);		// Real life ?? ms
 
-TickType_t startTime;
-TickType_t endTime;
-TickType_t elapsedTime;
+long startTime;
+long endTime;
+long elapsedTime;
 
-volatile uint8_t statusTraffic_NS = 1;
-volatile uint8_t statusTraffic_EW = 0;
+extern volatile uint8_t buttonNorthFlag;
+extern volatile uint8_t buttonWestFlag;
+
 volatile uint8_t statusPedestrian_N = 0;
 volatile uint8_t statusPedestrian_W = 1;
+volatile uint8_t statusTraffic_NS = 1;
+volatile uint8_t statusTraffic_EW = 0;
+volatile uint8_t lastActive_NS = 1;
 
 volatile uint8_t statusVehicle_N = 0;
 volatile uint8_t statusVehicle_S = 0;
 volatile uint8_t statusVehicle_E = 0;
 volatile uint8_t statusVehicle_W = 0;
 uint8_t pendingTraffic = 0;
+
 #endif
 /* USER CODE END Variables */
 /* Definitions for idleTask */
@@ -132,13 +138,6 @@ const osThreadAttr_t trafficTask_attributes = {
 		.stack_size = 128 * 4,
 		.priority = (osPriority_t) osPriorityNormal,
 };
-/* Definitions for pedestrianTaskB */
-osThreadId_t pedestrianTaskBHandle;
-const osThreadAttr_t pedestrianTaskB_attributes = {
-		.name = "pedestrianTaskB",
-		.stack_size = 128 * 4,
-		.priority = (osPriority_t) osPriorityHigh,
-};
 /* Definitions for toggleW */
 osThreadId_t toggleWHandle;
 const osThreadAttr_t toggleW_attributes = {
@@ -152,6 +151,13 @@ const osThreadAttr_t toggleN_attributes = {
 		.name = "toggleN",
 		.stack_size = 128 * 4,
 		.priority = (osPriority_t) osPriorityRealtime,
+};
+/* Definitions for pedestrianTaskB */
+osThreadId_t pedestrianTaskBHandle;
+const osThreadAttr_t pedestrianTaskB_attributes = {
+		.name = "pedestrianTaskB",
+		.stack_size = 128 * 4,
+		.priority = (osPriority_t) osPriorityHigh,
 };
 /* Definitions for mutex */
 osMutexId_t mutexHandle;
@@ -172,9 +178,9 @@ const osMutexAttr_t buttonMutex_attributes = {
 void StartIdle(void *argument);
 void StartPedestrian(void *argument);
 void StartTraffic(void *argument);
-void StartPedestrianB(void *argument);
 void StartToggleW(void *argument);
 void StartToggleN(void *argument);
+void StartPedestrianB(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -219,14 +225,14 @@ void MX_FREERTOS_Init(void) {
 	/* creation of trafficTask */
 	trafficTaskHandle = osThreadNew(StartTraffic, NULL, &trafficTask_attributes);
 
-	/* creation of pedestrianTaskB */
-	pedestrianTaskBHandle = osThreadNew(StartPedestrianB, NULL, &pedestrianTaskB_attributes);
-
 	/* creation of toggleW */
 	toggleWHandle = osThreadNew(StartToggleW, NULL, &toggleW_attributes);
 
 	/* creation of toggleN */
 	toggleNHandle = osThreadNew(StartToggleN, NULL, &toggleN_attributes);
+
+	/* creation of pedestrianTaskB */
+	pedestrianTaskBHandle = osThreadNew(StartPedestrianB, NULL, &pedestrianTaskB_attributes);
 
 	/* USER CODE BEGIN RTOS_THREADS */
 	/* add threads, ... */
@@ -278,22 +284,22 @@ void StartIdle(void *argument)
 			vTaskDelay(greenDelay);
 		}
 #else
-		if(!pendingTraffic) {
-			if (statusTraffic_NS) {
+		if( !pendingTraffic && (!buttonWestFlag || !buttonNorthFlag)) {
+			if (statusTraffic_NS && !buttonNorthFlag) {
 				xSemaphoreTake(mutexHandle, 0);
 				disableTraffic(T_NORTHSOUTH, P_WEST);
 				xSemaphoreGive(mutexHandle);
-				vTaskDelay(sysDelay);
+				vTaskDelay(mutexDelay);
 				xSemaphoreTake(mutexHandle, portMAX_DELAY);
 				if (!statusTraffic_NS) {
 					activateTraffic(T_EASTWEST, P_NORTH);
 				}
 				xSemaphoreGive(mutexHandle);
-			} else {
+			} else if (statusTraffic_EW && !buttonWestFlag){
 				xSemaphoreTake(mutexHandle, 0);
 				disableTraffic(T_EASTWEST, P_NORTH);
 				xSemaphoreGive(mutexHandle);
-				vTaskDelay(sysDelay);
+				vTaskDelay(mutexDelay);
 				xSemaphoreTake(mutexHandle, portMAX_DELAY);
 				if (!statusTraffic_EW) {
 					activateTraffic(T_NORTHSOUTH, P_WEST);
@@ -322,39 +328,29 @@ void StartPedestrian(void *argument)
 	for(;;)
 	{
 #ifdef RUN_TEST_PEDESTRIAN
-
-		//		vTaskDelay(sysDelay);
 		if (buttonWestFlag || buttonNorthFlag) {
 			xSemaphoreTake(mutexHandle, portMAX_DELAY);
 			if (buttonWestFlag && !buttonNorthFlag) {
 				if (statusPedestrian_W) {
 					buttonWestFlag = 0;
 				} else if (statusTraffic_EW) {
-				//	vTaskResume(toggleWHandle);
 					disableTraffic_Test(T_EASTWEST, P_NORTH);
 					activateTraffic_Test(T_NORTHSOUTH, P_WEST);
 					vTaskDelay(walkingDelay);
-				//	pedestrianReset_Test(P_WEST);
-				} else if (!statusTraffic_NS && !statusTraffic_EW) { // Works like a charm when singly pressed,
-				//	vTaskResume(toggleWHandle);
+				} else if (!statusTraffic_NS && !statusTraffic_EW) {
 					activateTraffic_Test(T_NORTHSOUTH, P_WEST);
 					vTaskDelay(walkingDelay);
-				//	pedestrianReset_Test(P_WEST);
 				}
 			} else if (!buttonWestFlag && buttonNorthFlag) {
 				if (statusPedestrian_N) {
 					buttonWestFlag = 0;
 				} else if (statusTraffic_NS) {
-				//	vTaskResume(toggleWHandle);
 					disableTraffic_Test(T_NORTHSOUTH, P_WEST);
 					activateTraffic_Test(T_EASTWEST, P_NORTH);
 					vTaskDelay(walkingDelay);
-			//		pedestrianReset_Test(P_NORTH);
 				} else if (!statusTraffic_NS && !statusTraffic_EW) {
-				//	vTaskResume(toggleWHandle);
 					activateTraffic_Test(T_EASTWEST, P_NORTH);
 					vTaskDelay(walkingDelay);
-			//		pedestrianReset_Test(P_NORTH);
 				}
 
 			} else if (buttonWestFlag && buttonNorthFlag) {
@@ -363,68 +359,74 @@ void StartPedestrian(void *argument)
 				} else if (statusPedestrian_N) {
 					buttonWestFlag = 0;
 				}
-				//while (buttonWestFlag && buttonNorthFlag) {
-				//	trafficLight_Test(ORANGE, P_NORTH);
-				//	trafficLight_Test(ORANGE, P_WEST);
-				//	vTaskDelay(toggleFreq);
-				//	trafficLight_Test(GREEN, P_NORTH);
-				//	trafficLight_Test(GREEN, P_WEST);
-				//	vTaskDelay(toggleFreq);
-				//}
-				//vTaskResume(toggleWHandle);
-				//vTaskResume(toggleNHandle);
-				//if (statusTraffic_NS) {
-				//	buttonWestFlag = 0;
-				//} else if (statusTraffic_EW) {
-				//	buttonNorthFlag = 0;
-				//} else {
-				//
-				//}
-
 			}
 			xSemaphoreGive(mutexHandle);
 			vTaskDelay(sysDelay);
 		}
 #else
-		if ( buttonNorthFlag ) {
-			while (!statusPedestrian_N) {
-				xSemaphoreTake(buttonMutexHandle, 0);
-				pedestrianPending_Test(P_NORTH);
-				vTaskDelay( toggleFreq );
-				xSemaphoreGive(buttonMutexHandle);
-			}
-			pedestrianReset_Test(P_NORTH);
-			startTime = xTaskGetTickCount();
-			pedestrianLight(GREEN, P_NORTH);
-			while (elapsedTime < walkingDelay ) {
-				endTime = xTaskGetTickCount();
-				elapsedTime = endTime - startTime;
-			}
-			vTaskDelay(testingDelay);
-			elapsedTime = 0;
-			buttonNorthFlag = 0;
-		} else if ( buttonWestFlag ) {
-			while (!statusPedestrian_W) {
-				xSemaphoreTake(buttonMutexHandle, 0);
-				pedestrianPending_Test(P_WEST);
-				vTaskDelay( toggleFreq );
-				xSemaphoreGive(buttonMutexHandle);
-			}
-			pedestrianReset_Test(P_WEST);
-			startTime = xTaskGetTickCount();
-			pedestrianLight(GREEN, P_WEST);
-			while (elapsedTime < walkingDelay ) {
-				endTime = xTaskGetTickCount();
-				elapsedTime = endTime -  startTime;
-			}
-			vTaskDelay(testingDelay);
-			elapsedTime = 0;
-			buttonWestFlag = 0;
+		if (buttonWestFlag || buttonNorthFlag) {
+			//if (buttonWestFlag) {
+			xSemaphoreTake(mutexHandle, portMAX_DELAY);
+			if (buttonWestFlag && buttonNorthFlag) {
+				if (statusPedestrian_W) {
+					buttonWestFlag = 0;
+				} else if (statusPedestrian_N) {
+					buttonNorthFlag = 0;
+				} else if (lastActive_NS && !statusTraffic_EW && !statusTraffic_NS) {
+					activateTraffic(T_EASTWEST, P_NORTH);
+					vTaskDelay(walkingDelay);
+				} else if (lastActive_NS && statusPedestrian_N) {
+					buttonNorthFlag = 0;
+				} else if (!lastActive_NS && !statusTraffic_EW && !statusTraffic_NS) {
+					activateTraffic(T_NORTHSOUTH, P_WEST);
+					vTaskDelay(walkingDelay);
+				}  else if (!lastActive_NS && statusPedestrian_W) {
+					buttonWestFlag = 0;
+				}
+			} else if (buttonWestFlag && !buttonNorthFlag) {
+				if (statusPedestrian_W) {
+					buttonWestFlag = 0;
+				} else if (statusTraffic_EW) {
+					disableTraffic(T_EASTWEST, P_NORTH);
+					activateTraffic(T_NORTHSOUTH, P_WEST);
+					vTaskDelay(walkingDelay);
+				} else if (!statusTraffic_NS && !statusTraffic_EW) {
+					activateTraffic(T_NORTHSOUTH, P_WEST);
+					vTaskDelay(walkingDelay);
+				}
+			} else if (!buttonWestFlag && buttonNorthFlag) {
+				if (statusPedestrian_N) {
+					buttonWestFlag = 0;
+				} else if (statusTraffic_NS) {
+					disableTraffic(T_NORTHSOUTH, P_WEST);
+					activateTraffic(T_EASTWEST, P_NORTH);
+					vTaskDelay(walkingDelay);
+				} else if (!statusTraffic_NS && !statusTraffic_EW) {
+					activateTraffic(T_EASTWEST, P_NORTH);
+					vTaskDelay(walkingDelay);
+				}
+			 /*else if (buttonWestFlag && buttonNorthFlag) {
+				if (statusPedestrian_W) {
+					buttonWestFlag = 0;
+				} else if (statusPedestrian_N) {
+					buttonNorthFlag = 0;
+				} else if (lastActive_NS && !statusTraffic_EW && !statusTraffic_NS) {
+					activateTraffic(T_EASTWEST, P_NORTH);
+					vTaskDelay(walkingDelay);
+				} else if (!lastActive_NS && !statusTraffic_EW && !statusTraffic_NS) {
+					activateTraffic(T_NORTHSOUTH, P_WEST);
+					vTaskDelay(walkingDelay);
+				}
+			 */
+			//vTaskDelay(sysDelay);
 		}
-#endif
-		osDelay(1);
+		vTaskDelay(sysDelay);
+		xSemaphoreGive(mutexHandle);
 	}
-	/* USER CODE END StartPedestrian */
+#endif
+	osDelay(1);
+	}
+/* USER CODE END StartPedestrian */
 }
 
 /* USER CODE BEGIN Header_StartTraffic */
@@ -444,7 +446,6 @@ void StartTraffic(void *argument)
 #ifdef RUN_TEST_TRAFFIC
 		pendingTraffic = checkTraffic_Test();
 		if ( pendingTraffic ) {
-			//vTaskDelay(testingDelay);
 			xSemaphoreTake(mutexHandle, portMAX_DELAY);
 			// If all roads are red, and a vehicle appears from ONE direction
 			if ( (!statusTraffic_NS && !statusTraffic_EW) && (statusVehicle_N || statusVehicle_S) && (!statusVehicle_E && !statusVehicle_W)) {
@@ -499,7 +500,6 @@ void StartTraffic(void *argument)
 #else
 		pendingTraffic = checkTraffic();
 		if ( pendingTraffic ) {
-			//vTaskDelay(testingDelay);
 			xSemaphoreTake(mutexHandle, portMAX_DELAY);
 			// If all roads are red, and a vehicle appears from ONE direction
 			if ( (!statusTraffic_NS && !statusTraffic_EW) && (statusVehicle_N || statusVehicle_S) && (!statusVehicle_E && !statusVehicle_W)) {
@@ -510,15 +510,23 @@ void StartTraffic(void *argument)
 				vTaskDelay(greenDelay);
 				// R2.5 A traffic light remains green if there are active cars in either allowed direction and no active cars are waiting on red traffic lights
 			} else if ( (statusTraffic_NS && !statusTraffic_EW) && (statusVehicle_N || statusVehicle_S) && (!statusVehicle_E && !statusVehicle_W)) {
-				if (statusTraffic_NS) {
+				if (statusTraffic_NS && !buttonNorthFlag) {
 					staticTraffic(); // R2.6 is considered within the staticTraffic_Test function
+				} else if (buttonNorthFlag) {
+					disableTraffic(T_NORTHSOUTH, P_WEST);
+					activateTraffic(T_EASTWEST, P_NORTH);
+					pedestrianReset(P_NORTH);
 				} else {
 					activateTraffic(T_NORTHSOUTH, P_WEST);
 					staticTraffic();
 				}
 			} else if ( (!statusTraffic_NS && statusTraffic_EW) && (statusVehicle_E || statusVehicle_W ) && (!statusVehicle_N && !statusVehicle_S)) {
-				if (statusTraffic_EW) {
+				if (statusTraffic_EW && !buttonWestFlag) {
 					staticTraffic(); // R2.6 is considered within the staticTraffic_Test function
+				} else if (buttonWestFlag) {
+					disableTraffic(T_EASTWEST, P_NORTH);
+					activateTraffic(T_NORTHSOUTH, P_WEST);
+					pedestrianReset(P_WEST);
 				} else {
 					activateTraffic(T_EASTWEST, P_NORTH);
 					staticTraffic();
@@ -549,60 +557,6 @@ void StartTraffic(void *argument)
 	/* USER CODE END StartTraffic */
 }
 
-/* USER CODE BEGIN Header_StartPedestrianB */
-/**
- * @brief Function implementing the pedestrianTaskB thread.
- * @param argument: Not used
- * @retval None
- */
-/* USER CODE END Header_StartPedestrianB */
-void StartPedestrianB(void *argument)
-{
-	/* USER CODE BEGIN StartPedestrianB */
-	/* Infinite loop */
-	for(;;)
-	{
-#ifdef RUN_TEST_PEDESTRIAN
-		/*
-		vTaskDelay(testingDelay);
-		if (buttonWestFlag && statusPedestrian_N && !statusPedestrian_W) {
-			// Button is pressed,
-			while (!statusPedestrian_W && statusPedestrian_N) {
-				pedestrianPending_Test(P_WEST);
-				vTaskDelay( toggleFreq );
-			}
-			while (!statusPedestrian_N && !statusPedestrian_W) {
-			//	xSemaphoreTake(buttonMutexHandle, 0);
-				pedestrianPending_Test(P_WEST);
-				if (buttonNorthFlag && !statusPedestrian_N) {
-					pedestrianPending_Test(P_NORTH);
-				}
-			//	xSemaphoreGive(buttonMutexHandle);
-				vTaskDelay( toggleFreq );
-			}
-			pedestrianReset_Test(P_WEST);
-			pedestrianLight(HOLD, P_WEST);
-			disableTraffic_Test(T_NORTHSOUTH, P_WEST);
-		} else if (buttonWestFlag && !statusPedestrian_N && !statusPedestrian_W) {
-			while(buttonWestFlag && (!statusPedestrian_N || !statusPedestrian_W)) {
-				if (statusPedestrian_W) {
-					break;
-				}
-				pedestrianPending_Test(P_WEST);
-				vTaskDelay( toggleFreq );
-			}
-			pedestrianReset_Test(P_WEST);
-			pedestrianLight(HOLD, P_WEST);
-			disableTraffic_Test(T_NORTHSOUTH, P_WEST);
-		}
-		 */
-#else
-#endif
-		osDelay(1);
-	}
-	/* USER CODE END StartPedestrianB */
-}
-
 /* USER CODE BEGIN Header_StartToggleW */
 /**
  * @brief Function implementing the toggleW thread.
@@ -617,10 +571,10 @@ void StartToggleW(void *argument)
 	for(;;)
 	{
 		if(statusPedestrian_W || !buttonWestFlag) {
-			pedestrianReset_Test(P_WEST);
+			pedestrianReset(P_WEST);
 		} else if (buttonWestFlag) {
-			pedestrianPending_Test(P_WEST);
-			vTaskDelay( toggleFreq );
+			pedestrianPending(P_WEST);
+			vTaskDelay(toggleFreq);
 		}
 		osDelay(1);
 	}
@@ -641,14 +595,51 @@ void StartToggleN(void *argument)
 	for(;;)
 	{
 		if(statusPedestrian_N || !buttonNorthFlag) {
-			pedestrianReset_Test(P_NORTH);
+			pedestrianReset(P_NORTH);
 		} else if (buttonNorthFlag) {
-			pedestrianPending_Test(P_NORTH);
-			vTaskDelay( toggleFreq );
+			pedestrianPending(P_NORTH);
+			vTaskDelay(toggleFreq);
 		}
 		osDelay(1);
 	}
 	/* USER CODE END StartToggleN */
+}
+
+/* USER CODE BEGIN Header_StartPedestrianB */
+/**
+ * @brief Function implementing the pedestrianTaskB thread.
+ * @param argument: Not used
+ * @retval None
+ */
+/* USER CODE END Header_StartPedestrianB */
+void StartPedestrianB(void *argument)
+{
+	/* USER CODE BEGIN StartPedestrianB */
+	/* Infinite loop */
+	for(;;)
+	{
+		/*
+		if (buttonNorthFlag) {
+			xSemaphoreTake(mutexHandle, portMAX_DELAY);
+			if (!buttonWestFlag && buttonNorthFlag) {
+				if (statusPedestrian_N) {
+					buttonNorthFlag = 0;
+				} else if (statusTraffic_NS) {
+					disableTraffic(T_NORTHSOUTH, P_WEST);
+					activateTraffic(T_EASTWEST, P_NORTH);
+					vTaskDelay(walkingDelay);
+				} else if (!statusTraffic_NS && !statusTraffic_EW) {
+					activateTraffic(T_EASTWEST, P_WEST);
+					vTaskDelay(walkingDelay);
+				}
+			}
+			xSemaphoreGive(mutexHandle);
+			vTaskDelay(sysDelay);
+		}
+		 */
+		osDelay(1);
+	}
+	/* USER CODE END StartPedestrianB */
 }
 
 /* Private application code --------------------------------------------------*/

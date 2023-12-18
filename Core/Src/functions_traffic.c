@@ -23,20 +23,20 @@ extern long startTime;
 extern long endTime;
 extern long elapsedTime;
 
-extern uint8_t buttonNorthFlag;
-extern uint8_t buttonWestFlag;
+extern volatile uint8_t buttonNorthFlag;
+extern volatile uint8_t buttonWestFlag;
 
 extern uint8_t statusTraffic_NS;
 extern uint8_t statusTraffic_EW;
 extern uint8_t statusPedestrian_N;
 extern uint8_t statusPedestrian_W;
 
-extern volatile uint8_t statusVehicle_N;
-extern volatile uint8_t statusVehicle_S;
-extern volatile uint8_t statusVehicle_E;
-extern volatile uint8_t statusVehicle_W;
+extern uint8_t statusVehicle_N;
+extern uint8_t statusVehicle_S;
+extern uint8_t statusVehicle_E;
+extern uint8_t statusVehicle_W;
 
-void activateTraffic(enum Street t_dir, enum Street p_dir){
+void activateTraffic(enum Street t_dir, enum Street p_dir) {
 	trafficLight(RED, t_dir);
 	trafficLight(ORANGE, t_dir);
 	vTaskDelay(orangeDelay);
@@ -44,24 +44,26 @@ void activateTraffic(enum Street t_dir, enum Street p_dir){
 	trafficLight(GREEN, t_dir);
 }
 
-void disableTraffic(enum Street t_dir, enum Street p_dir){
+void disableTraffic(enum Street t_dir, enum Street p_dir) {
 	trafficLight(GREEN, t_dir);
-	for(uint8_t i = 0; i < 10; i++) {
-		pedestrianWarning(p_dir);
-		vTaskDelay(toggleFreq);
-	}
+//	for(uint8_t i = 0; i < 10; i++) {
+//		pedestrianWarning(p_dir);
+//		vTaskDelay(toggleFreq);
+//	}
 	pedestrianLight(RED, p_dir);
 	vTaskDelay(safetyDelay);
 	trafficLight(ORANGE, t_dir);
 	vTaskDelay(orangeDelay);
 	trafficLight(RED, t_dir);
-	statusTraffic_NS = 0;
 	vTaskDelay(safetyDelay);
 }
 
 void staticTraffic(){
 	while(statusVehicle_E || statusVehicle_W) {
-		if(statusVehicle_N || statusVehicle_S) {
+		if(buttonWestFlag) {
+			vTaskDelay(pedestrianDelay);
+			break;
+		} else if(statusVehicle_N || statusVehicle_S) {
 			vTaskDelay(redDelayMax);
 			break;
 		}
@@ -71,7 +73,10 @@ void staticTraffic(){
 		checkTraffic();
 	}
 	while(statusVehicle_N || statusVehicle_S) {
-		if(statusVehicle_E || statusVehicle_W) {
+		if(buttonNorthFlag) {
+			vTaskDelay(pedestrianDelay);
+			break;
+		} else if(statusVehicle_E || statusVehicle_W) {
 			vTaskDelay(redDelayMax);
 			break;
 		}
