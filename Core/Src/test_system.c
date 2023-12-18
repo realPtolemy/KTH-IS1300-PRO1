@@ -161,6 +161,8 @@ void disablePedestrian_W_Test(){
 }
 
 
+// OLDER FUNCTIONS ABOVE THIS COMMENT, IGNORE
+
 void activateTraffic_Test(enum Street t_dir, enum Street p_dir) {
 	trafficLight_Test(RED, t_dir);
 	trafficLight_Test(ORANGE, t_dir);
@@ -171,16 +173,15 @@ void activateTraffic_Test(enum Street t_dir, enum Street p_dir) {
 
 void disableTraffic_Test(enum Street t_dir, enum Street p_dir) {
 	trafficLight_Test(GREEN, t_dir);
-	for(uint8_t i = 0; i < 10; i++) {
-		pedestrianWarning(p_dir);
-		vTaskDelay(toggleFreq);
-	}
+//	for(uint8_t i = 0; i < 10; i++) {
+//		pedestrianWarning(p_dir);
+//		vTaskDelay(toggleFreq);
+//	}
 	pedestrianLight_Test(RED, p_dir);
 	vTaskDelay(safetyDelay);
 	trafficLight_Test(ORANGE, t_dir);
 	vTaskDelay(orangeDelay);
 	trafficLight_Test(RED, t_dir);
-	statusTraffic_NS = 0;
 	vTaskDelay(safetyDelay);
 }
 

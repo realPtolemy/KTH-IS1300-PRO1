@@ -379,8 +379,10 @@ void pedestrianLight_Test(enum LED status, enum Street p_dir){
 		REG[p_dir] = REG[p_dir] | 0b010000; // Set NORTH pedestrian light bit to GREEN
 		if (p_dir == P_NORTH) {
 			statusPedestrian_N = 1;
+			buttonNorthFlag = 0;
 		} else {
 			statusPedestrian_W = 1;
+			buttonWestFlag = 0;
 		}
 		break;
 	case RED: // Set the lights RED
@@ -388,10 +390,8 @@ void pedestrianLight_Test(enum LED status, enum Street p_dir){
 		REG[p_dir] = REG[p_dir] | 0b001000; // Set NORTH pedestrian light bit to RED
 		if (p_dir == P_NORTH) {
 			statusPedestrian_N = 0;
-			buttonNorthFlag = 0;
 		} else {
 			statusPedestrian_W = 0;
-			buttonWestFlag = 0;
 		}
 		break;
 	}
@@ -423,4 +423,5 @@ void pedestrianWarning_Test(enum Street p_dir){
 
 void pedestrianReset_Test(enum Street p_dir){
 	REG[p_dir] = REG[p_dir] & 0b011111;
+	setReg_Test();
 }
