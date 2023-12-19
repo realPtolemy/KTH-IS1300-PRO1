@@ -718,6 +718,44 @@ void StartTraffic(void *argument)
  * @brief Function implementing the toggleW thread.
  * @param argument: Not used
  * @retval None
+ *
+ * The StartTraffic task is assigned a priority level 41 out of 48
+ *
+ * The purpose of the task is to let the BLUE pedestrian indicator
+ * lights toggle on and of at toggleFreq ms, whenever a pedestrian
+ * has pushed any of the two the WEST pedestrian crossing buttons.
+ *
+ * The conditions for the task to run is that the WEST pedestrian
+ * crossing must NOT already be enabled, neither can any of the
+ * WEST pedestrian crossing buttons be read as deactivated, if
+ * so is the case, the task simply just resets the BLUE pedestrian
+ * indicator lights to a disabled state by pushing a low bit
+ * to the the bit of the light at the shift register.
+ *
+ * If this condition is met, the pedestrian pending toggle
+ * function is call whenever any of the WEST pedestrian pending
+ * buttons are pressed, setting their indicative ISR flag
+ * to high.
+ *
+ * Note that the pedestrian button ISR flags are set to low
+ * whenever its given pedestrian crossing lights turn GREEN.
+ *
+ * The task is recursively run every toggleFreq ms.
+ * As it is the highest priority task, it will always
+ * run. However once it has executed a cycle of its forever loop,
+ * the scheduler will resume the instruction of any of the lower
+ * priority tasks which may for example carry out a sequence of
+ * instructions that are guarded by mutex.
+ * The toggle delay will ensure that the lower priority tasks can
+ * proceed somewhat it with its current task before the higher
+ * ToggleW task grabs all resources again to toggle the BLUE
+ * indicator light ON or OFF.
+ *
+ * The toggle task for the WEST BLUE pedestrian indicator light
+ * is defined as its own task, separate from the NORTH blue
+ * pedestrian indicator light, with the same task priority to
+ * allow for them to toggle on and off concurrently.
+ *
  */
 /* USER CODE END Header_StartToggleW */
 void StartToggleW(void *argument)
@@ -726,11 +764,12 @@ void StartToggleW(void *argument)
 	/* Infinite loop */
 	for(;;)
 	{
+		// Initial check if the WEST pedestrian crossing has turned GREEN OR if the button ISR flag have been reset to low
 		if(statusPedestrian_W || !buttonWestFlag) {
-			pedestrianReset(P_WEST);
-		} else if (buttonWestFlag) {
-			pedestrianPending(P_WEST);
-			vTaskDelay(toggleFreq);
+			pedestrianReset(P_WEST);	// Reset the BLUE indicator light bit to low at the shift register
+		} else if (buttonWestFlag) {	// If the previous criteria is not met, and if the button ISR flag remains high
+			pedestrianPending(P_WEST);	// Toggle the BLUE indicator light ON and OFF
+			vTaskDelay(toggleFreq);		// wait toggleFreq ms for the next recursive toggle of the BLUE indicator light
 		}
 		osDelay(1);
 	}
@@ -742,6 +781,44 @@ void StartToggleW(void *argument)
  * @brief Function implementing the toggleN thread.
  * @param argument: Not used
  * @retval None
+ *
+ * The StartTraffic task is assigned a priority level 41 out of 48
+ *
+ * The purpose of the task is to let the BLUE pedestrian indicator
+ * lights toggle on and of at toggleFreq ms, whenever a pedestrian
+ * has pushed any of the two the NORTH pedestrian crossing buttons.
+ *
+ * The conditions for the task to run is that the NORTH pedestrian
+ * crossing must NOT already be enabled, neither can any of the
+ * NORTH pedestrian crossing buttons be read as deactivated, if
+ * so is the case, the task simply just resets the BLUE pedestrian
+ * indicator lights to a disabled state by pushing a low bit
+ * to the the bit of the light at the shift register.
+ *
+ * If this condition is met, the pedestrian pending toggle
+ * function is call whenever any of the NORTH pedestrian pending
+ * buttons are pressed, setting their indicative ISR flag
+ * to high.
+ *
+ * Note that the pedestrian button ISR flags are set to low
+ * whenever its given pedestrian crossing lights turn GREEN.
+ *
+ * The task is recursively run every toggleFreq ms.
+ * As it is the highest priority task, it will always
+ * run. However once it has executed a cycle of its forever loop,
+ * the scheduler will resume the instruction of any of the lower
+ * priority tasks which may for example carry out a sequence of
+ * instructions that are guarded by mutex.
+ * The toggle delay will ensure that the lower priority tasks can
+ * proceed somewhat it with its current task before the higher
+ * ToggleW task grabs all resources again to toggle the BLUE
+ * indicator light ON or OFF.
+ *
+ * The toggle task for the NORTH BLUE pedestrian indicator light
+ * is defined as its own task, separate from the NORTH blue
+ * pedestrian indicator light, with the same task priority to
+ * allow for them to toggle on and off concurrently.
+ *
  */
 /* USER CODE END Header_StartToggleN */
 void StartToggleN(void *argument)
@@ -750,11 +827,12 @@ void StartToggleN(void *argument)
 	/* Infinite loop */
 	for(;;)
 	{
+		// Initial check if the NORTH pedestrian crossing has turned GREEN OR if the button ISR flags have been reset to low
 		if(statusPedestrian_N || !buttonNorthFlag) {
-			pedestrianReset(P_NORTH);
-		} else if (buttonNorthFlag) {
-			pedestrianPending(P_NORTH);
-			vTaskDelay(toggleFreq);
+			pedestrianReset(P_NORTH);	// Reset the BLUE indicator light bit to low at the shift register
+		} else if (buttonNorthFlag) {	// If the previous criteria is not met, and if the button ISR flag remains high
+			pedestrianPending(P_NORTH);	// Toggle the BLUE indicator light ON and OFF
+			vTaskDelay(toggleFreq);		// wait toggleFreq ms for the next recursive toggle of the BLUE indicator light
 		}
 		osDelay(1);
 	}
