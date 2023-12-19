@@ -69,11 +69,12 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-//#define RUN_TEST_PROGRAM
-//#define RUN_TEST_IDLE
-//#define RUN_TEST_PEDESTRIAN
-//#define RUN_TEST_TRAFFIC
-//#define RUN_TEST_TOGGLE
+#define RUN_PROGRAM_VARIABLES
+#define RUN_IDLE
+#define RUN_PEDESTRIAN
+#define RUN_TRAFFIC
+#define RUN_TOGGLEW
+#define RUN_TOGGLEN
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -88,8 +89,36 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
+#ifdef RUN_PROGRAM_VARIABLES
+const TickType_t sysDelay = pdMS_TO_TICKS(800);			// used to avoid system hickup
+const TickType_t mutexDelay = pdMS_TO_TICKS(500);		// used to avoid mutex hickup
+const TickType_t toggleFreq = pdMS_TO_TICKS(250);		// arguments is ms, then coverted to ticks
+const TickType_t walkingDelay = pdMS_TO_TICKS(12000);	// Real life ?? ms 3 for testing 17 for simulating
+const TickType_t pedestrianDelay = pdMS_TO_TICKS(3000);
+const TickType_t safetyDelay = pdMS_TO_TICKS(3000);		// Real life ~6000 ms
+const TickType_t greenDelay = pdMS_TO_TICKS(8000); 		// Real life ~47000 ms
+const TickType_t orangeDelay = pdMS_TO_TICKS(2500); 	// Real life ~5000 ms
+const TickType_t redDelayMax = pdMS_TO_TICKS(500);		// Real life ?? ms
 
-#ifdef RUN_TEST_PROGRAM
+long startTime;
+long endTime;
+long elapsedTime;
+
+extern volatile uint8_t buttonNorthFlag;
+extern volatile uint8_t buttonWestFlag;
+
+volatile uint8_t statusPedestrian_N = 0;
+volatile uint8_t statusPedestrian_W = 1;
+volatile uint8_t statusTraffic_NS = 1;
+volatile uint8_t statusTraffic_EW = 0;
+volatile uint8_t lastActive_NS = 1;
+
+volatile uint8_t statusVehicle_N = 0;
+volatile uint8_t statusVehicle_S = 0;
+volatile uint8_t statusVehicle_E = 0;
+volatile uint8_t statusVehicle_W = 0;
+uint8_t pendingTraffic = 0;
+#else
 // Required program delays, in ms.
 const TickType_t sysDelay = pdMS_TO_TICKS(800);			// used to avoid mutex hickup
 const TickType_t toggleFreq = pdMS_TO_TICKS(250);		// arguments is ms, then coverted to ticks
@@ -122,35 +151,6 @@ uint8_t pendingTraffic = 0;
 
 uint8_t testVar = 1;
 
-#else
-const TickType_t sysDelay = pdMS_TO_TICKS(800);			// used to avoid system hickup
-const TickType_t mutexDelay = pdMS_TO_TICKS(500);		// used to avoid mutex hickup
-const TickType_t toggleFreq = pdMS_TO_TICKS(250);		// arguments is ms, then coverted to ticks
-const TickType_t walkingDelay = pdMS_TO_TICKS(3000);	// Real life ?? ms 3 for testing 17 for simulating
-const TickType_t pedestrianDelay = pdMS_TO_TICKS(3000);
-const TickType_t safetyDelay = pdMS_TO_TICKS(3000);		// Real life ~6000 ms
-const TickType_t greenDelay = pdMS_TO_TICKS(8000); 		// Real life ~47000 ms
-const TickType_t orangeDelay = pdMS_TO_TICKS(2500); 	// Real life ~5000 ms
-const TickType_t redDelayMax = pdMS_TO_TICKS(500);		// Real life ?? ms
-
-long startTime;
-long endTime;
-long elapsedTime;
-
-extern volatile uint8_t buttonNorthFlag;
-extern volatile uint8_t buttonWestFlag;
-
-volatile uint8_t statusPedestrian_N = 0;
-volatile uint8_t statusPedestrian_W = 1;
-volatile uint8_t statusTraffic_NS = 1;
-volatile uint8_t statusTraffic_EW = 0;
-volatile uint8_t lastActive_NS = 1;
-
-volatile uint8_t statusVehicle_N = 0;
-volatile uint8_t statusVehicle_S = 0;
-volatile uint8_t statusVehicle_E = 0;
-volatile uint8_t statusVehicle_W = 0;
-uint8_t pendingTraffic = 0;
 
 #endif
 /* USER CODE END Variables */
@@ -348,33 +348,7 @@ void StartIdle(void *argument)
 	/* Infinite loop */
 	while(1)
 	{
-
-#ifdef RUN_TEST_IDLE
-		if( !pendingTraffic && (!buttonWestFlag || !buttonNorthFlag)) {
-			if (statusTraffic_NS && !buttonNorthFlag) {
-				xSemaphoreTake(mutexHandle, 0);
-				disableTraffic_Test(T_NORTHSOUTH, P_WEST);
-				xSemaphoreGive(mutexHandle);
-				vTaskDelay(testingDelay);
-				xSemaphoreTake(mutexHandle, portMAX_DELAY);
-				if (!statusTraffic_NS) {
-					activateTraffic_Test(T_EASTWEST, P_NORTH);
-				}
-				xSemaphoreGive(mutexHandle);
-			} else if (statusTraffic_EW && !buttonWestFlag){
-				xSemaphoreTake(mutexHandle, 0);
-				disableTraffic_Test(T_EASTWEST, P_NORTH);
-				xSemaphoreGive(mutexHandle);
-				vTaskDelay( testingDelay );
-				xSemaphoreTake(mutexHandle, portMAX_DELAY);
-				if (!statusTraffic_EW) {
-					activateTraffic_Test(T_NORTHSOUTH, P_WEST);
-				}
-				xSemaphoreGive(mutexHandle);
-			}
-			vTaskDelay(greenDelay);
-		}
-#else
+#ifdef RUN_IDLE
 		// Recursive while loop that first checks if there is NOT any pending traffic NOR any activated pedestrian crossing buttons, before proceeding
 		if( !pendingTraffic && (!buttonWestFlag || !buttonNorthFlag) ) {
 			// If there currently is traffic in the NORTH and SOUTH direction, and the NORTH pedestrian crossing buttons have not been activated
@@ -402,6 +376,31 @@ void StartIdle(void *argument)
 			}
 			vTaskDelay(greenDelay);							// Either the NORT and SOUTH or EAST and WEST directions have been enabled, the traffic lights should remain GREEN for greenDelay ms
 		}													// before the StartIdle task recursively runs for another loop and cycles the traffic lights statuses
+#else
+		if( !pendingTraffic && (!buttonWestFlag || !buttonNorthFlag)) {
+			if (statusTraffic_NS && !buttonNorthFlag) {
+				xSemaphoreTake(mutexHandle, 0);
+				disableTraffic_Test(T_NORTHSOUTH, P_WEST);
+				xSemaphoreGive(mutexHandle);
+				vTaskDelay(testingDelay);
+				xSemaphoreTake(mutexHandle, portMAX_DELAY);
+				if (!statusTraffic_NS) {
+					activateTraffic_Test(T_EASTWEST, P_NORTH);
+				}
+				xSemaphoreGive(mutexHandle);
+			} else if (statusTraffic_EW && !buttonWestFlag){
+				xSemaphoreTake(mutexHandle, 0);
+				disableTraffic_Test(T_EASTWEST, P_NORTH);
+				xSemaphoreGive(mutexHandle);
+				vTaskDelay( testingDelay );
+				xSemaphoreTake(mutexHandle, portMAX_DELAY);
+				if (!statusTraffic_EW) {
+					activateTraffic_Test(T_NORTHSOUTH, P_WEST);
+				}
+				xSemaphoreGive(mutexHandle);
+			}
+			vTaskDelay(greenDelay);
+		}
 #endif
 		osDelay(1);
 	}
@@ -421,43 +420,7 @@ void StartPedestrian(void *argument)
 	/* Infinite loop */
 	for(;;)
 	{
-#ifdef RUN_TEST_PEDESTRIAN
-		if (buttonWestFlag || buttonNorthFlag) {
-			xSemaphoreTake(mutexHandle, portMAX_DELAY);
-			if (buttonWestFlag && !buttonNorthFlag) {
-				if (statusPedestrian_W) {
-					buttonWestFlag = 0;
-				} else if (statusTraffic_EW) {
-					disableTraffic_Test(T_EASTWEST, P_NORTH);
-					activateTraffic_Test(T_NORTHSOUTH, P_WEST);
-					vTaskDelay(walkingDelay);
-				} else if (!statusTraffic_NS && !statusTraffic_EW) {
-					activateTraffic_Test(T_NORTHSOUTH, P_WEST);
-					vTaskDelay(walkingDelay);
-				}
-			} else if (!buttonWestFlag && buttonNorthFlag) {
-				if (statusPedestrian_N) {
-					buttonWestFlag = 0;
-				} else if (statusTraffic_NS) {
-					disableTraffic_Test(T_NORTHSOUTH, P_WEST);
-					activateTraffic_Test(T_EASTWEST, P_NORTH);
-					vTaskDelay(walkingDelay);
-				} else if (!statusTraffic_NS && !statusTraffic_EW) {
-					activateTraffic_Test(T_EASTWEST, P_NORTH);
-					vTaskDelay(walkingDelay);
-				}
-
-			} else if (buttonWestFlag && buttonNorthFlag) {
-				if (statusPedestrian_W) {
-					buttonWestFlag = 0;
-				} else if (statusPedestrian_N) {
-					buttonWestFlag = 0;
-				}
-			}
-			xSemaphoreGive(mutexHandle);
-			vTaskDelay(sysDelay);
-		}
-#else
+#ifdef RUN_PEDESTRIAN
 		if (buttonWestFlag || buttonNorthFlag) {
 			//if (buttonWestFlag) {
 			xSemaphoreTake(mutexHandle, portMAX_DELAY);
@@ -517,6 +480,42 @@ void StartPedestrian(void *argument)
 		vTaskDelay(sysDelay);
 		xSemaphoreGive(mutexHandle);
 	}
+#else
+		if (buttonWestFlag || buttonNorthFlag) {
+			xSemaphoreTake(mutexHandle, portMAX_DELAY);
+			if (buttonWestFlag && !buttonNorthFlag) {
+				if (statusPedestrian_W) {
+					buttonWestFlag = 0;
+				} else if (statusTraffic_EW) {
+					disableTraffic_Test(T_EASTWEST, P_NORTH);
+					activateTraffic_Test(T_NORTHSOUTH, P_WEST);
+					vTaskDelay(walkingDelay);
+				} else if (!statusTraffic_NS && !statusTraffic_EW) {
+					activateTraffic_Test(T_NORTHSOUTH, P_WEST);
+					vTaskDelay(walkingDelay);
+				}
+			} else if (!buttonWestFlag && buttonNorthFlag) {
+				if (statusPedestrian_N) {
+					buttonWestFlag = 0;
+				} else if (statusTraffic_NS) {
+					disableTraffic_Test(T_NORTHSOUTH, P_WEST);
+					activateTraffic_Test(T_EASTWEST, P_NORTH);
+					vTaskDelay(walkingDelay);
+				} else if (!statusTraffic_NS && !statusTraffic_EW) {
+					activateTraffic_Test(T_EASTWEST, P_NORTH);
+					vTaskDelay(walkingDelay);
+				}
+
+			} else if (buttonWestFlag && buttonNorthFlag) {
+				if (statusPedestrian_W) {
+					buttonWestFlag = 0;
+				} else if (statusPedestrian_N) {
+					buttonWestFlag = 0;
+				}
+			}
+			xSemaphoreGive(mutexHandle);
+			vTaskDelay(sysDelay);
+		}
 #endif
 	osDelay(1);
 	}
@@ -574,8 +573,85 @@ void StartTraffic(void *argument)
 	/* Infinite loop */
 	while(1)
 	{
+#ifdef RUN_TRAFFIC
+		pendingTraffic = checkTraffic();					// Start by checking the current status of all vehicles
+		if ( pendingTraffic ) {								// If there are any vehicles enabled
+			xSemaphoreTake(mutexHandle, portMAX_DELAY);		// Wait INDEFINITELY to take the mutex and proceed with any of the scenarios below once taken
 
-#ifdef RUN_TEST_TRAFFIC
+			// SCENARIO 1: Traffic lights in all street directions are RED, and a vehicle appears from ONE direction
+			// If NEITHER DIRECTION is ENABLED and there is traffic from the NORTH OR SOUTH
+			if ( (!statusTraffic_NS && !statusTraffic_EW) && (statusVehicle_N || statusVehicle_S) && (!statusVehicle_E && !statusVehicle_W) ) {
+				activateTraffic(T_NORTHSOUTH, P_WEST);		// Enable traffic in NORTH and SOUTH direction, and the WEST pedestrian crossing
+				vTaskDelay(greenDelay);						// Hold the lights green for greenDelay ms.
+			// If NEITHER DIRECTION is ENABLED and there is traffic from the EAST OR WEST
+			} else if ( (!statusTraffic_NS && !statusTraffic_EW) && (statusVehicle_E || statusVehicle_W ) && (!statusVehicle_N && !statusVehicle_S) ) {
+				activateTraffic(T_EASTWEST, P_NORTH);		// Enable traffic in EAST and WEST direction, and the NORTH pedestrian crossing
+				vTaskDelay(greenDelay);						// Hold the lights green for greenDelay ms.
+
+
+			// SCENARIO 2 (R2.5): Traffic lights remain green if there are active cars in either allowed direction and no active cars are waiting on red traffic lights
+			// If there is only traffic in the NORTH and SOUTH direction, and it is caused by either the NORTH or SOUTH vehicle only
+			} else if ( (statusTraffic_NS && !statusTraffic_EW) && (statusVehicle_N || statusVehicle_S) && (!statusVehicle_E && !statusVehicle_W) ) {
+				// Then confirm that there is no pedestrian that wants to cross the NORTH pedestrian crossing AND that the traffic of the NORTH and SOUTH direction is enabled
+				if (statusTraffic_NS && !buttonNorthFlag) {	// If there is no pedestrian that wish to cross, keep the traffic static until a vehicle appears in ooposite direction
+					staticTraffic(); 						// Subscenario 2 (R2.6), where a vehicle appears in opposite direction, is handled within the staticTraffic function
+				// If a pedestrian suddenly wish to cross the NORTH pedestrian crossing
+				} else if (buttonNorthFlag) {
+					disableTraffic(T_NORTHSOUTH, P_WEST);	// Proceed by disabling traffic in NORTH and SOUTH direction, and for the WEST pedestrian crossing
+					activateTraffic(T_EASTWEST, P_NORTH);	// Enable traffic in EAST and WEST direction, and the NORTH pedestrian crossing
+					pedestrianReset(P_NORTH);				// Disable the BLUE NORTH crossing pending pedestrian indicator light by resetting it
+				// Else the traffic of the NORTH and SOUTH direction is not yet enabled and as such must be anbled before being kept at a static state
+				} else {
+					activateTraffic(T_NORTHSOUTH, P_WEST);	// Enable traffic in NORTH and SOUTH direction, and the WEST pedestrian crossing
+					staticTraffic();						// Keep the traffic static until either a pedestrian or vehicle wants to cross the current traffic direction
+				}
+			// If there is only traffic in the EAST and WEST direction, and it is caused by either the EAST or WEST vehicle only
+			} else if ( (!statusTraffic_NS && statusTraffic_EW) && (statusVehicle_E || statusVehicle_W ) && (!statusVehicle_N && !statusVehicle_S) ) {
+				// Then confirm that there is no pedestrian that wants to cross the WEST pedestrian crossing AND that the traffic of the EAST and WEST direction is enabled
+				if (statusTraffic_EW && !buttonWestFlag) {
+					staticTraffic(); 						// Subscenario 2 (R2.6), where a vehicle appears in opposite direction, is handled within the staticTraffic function
+					// If a pedestrian suddenly wish to cross the WEST pedestrian crossing
+				} else if (buttonWestFlag) {
+					disableTraffic(T_EASTWEST, P_NORTH);	// Proceed by disabling traffic in EAST and WEST direction, and for the NORTH pedestrian crossing
+					activateTraffic(T_NORTHSOUTH, P_WEST);	// Enable traffic in NORTH and SOUTH direction, and the WEST pedestrian crossing
+					pedestrianReset(P_WEST);				// Disable the BLUE WEST crossing pending pedestrian indicator light by resetting it
+				// Else the traffic of the EAST and WEST direction is not yet enabled and as such must be anbled before being kept at a static state
+				} else {
+					activateTraffic(T_EASTWEST, P_NORTH);	// Enable traffic in EAST and WEST direction, and the NORTH pedestrian crossing
+					staticTraffic();						// Keep the traffic static until either a pedestrian or vehicle wants to cross the current traffic direction
+				}
+
+
+			// SCENARIO 3 (R2.7): A car arrives at a RED light and there are NO a active cars in either allowed direction, causing the RED traffic lights to immediately transition to GREEN
+			// If traffic is enabled for the EAST and WEST direction, and vehicles appear from NORTH and SOUTH when there are no vehicles approaching from EAST or WEST
+			} else if ( (!statusTraffic_NS && statusTraffic_EW) && (statusVehicle_N || statusVehicle_S) && (!statusVehicle_E && !statusVehicle_W)) {
+				disableTraffic(T_EASTWEST, P_NORTH);		// Proceed by disabling traffic in EAST and WEST direction, and for the NORTH pedestrian crossing
+				activateTraffic(T_NORTHSOUTH, P_WEST);		// Enable traffic in NORTH and SOUTH direction, and the WEST pedestrian crossing
+			// If traffic is enabled for the NORTH and SOUTH direction, and vehicles appear from EAST and WEST when there are no vehicles approaching from NORTH or SOUTH
+			} else if ( (statusTraffic_NS && !statusTraffic_EW) && (statusVehicle_E || statusVehicle_W) && (!statusVehicle_N && !statusVehicle_S)) {
+				disableTraffic(T_NORTHSOUTH, P_WEST);		// Proceed by disabling traffic in NORTH and SOUTH direction, and for the WEST pedestrian crossing
+				activateTraffic(T_EASTWEST, P_NORTH);		// Enable traffic in EAST and WEST direction, and the NORTH pedestrian crossing
+
+
+			// SCENARIO 4: Congestion, which requires cycling between currently enabled direction, similar to the logic of the idle task
+			// If there are vehicles appearing from every direction
+			} else if ( (statusVehicle_E || statusVehicle_W ) && (statusVehicle_N || statusVehicle_S)) {
+				// Confirm if the currently enabled traffic direction is NORTH and SOUTH
+				if (statusTraffic_NS) {
+					disableTraffic(T_NORTHSOUTH, P_WEST);	// Proceed by disabling traffic in NORTH and SOUTH direction, and for the WEST pedestrian crossing
+					activateTraffic(T_EASTWEST, P_NORTH);	// Enable traffic in EAST and WEST direction, and the NORTH pedestrian crossing
+				// If currently enabled traffic direction is NOT NORTH and SOUTH, it must be EAST and WEST
+				} else {
+					disableTraffic(T_EASTWEST, P_NORTH);	// Proceed by disabling traffic in EAST and WEST direction, and for the NORTH pedestrian crossing
+					activateTraffic(T_NORTHSOUTH, P_WEST);	// Enable traffic in NORTH and SOUTH direction, and the WEST pedestrian crossing
+				}
+				vTaskDelay(greenDelay); 					// Must be placed last, if not then redDelayMax logic will not work properly.
+
+			// END OF ALL SCENARIOS
+			}
+			xSemaphoreGive(mutexHandle);					// Return mutex for other tasks to take
+		}
+#else
 		pendingTraffic = checkTraffic_Test();
 		if ( pendingTraffic ) {
 			xSemaphoreTake(mutexHandle, portMAX_DELAY);
@@ -628,84 +704,6 @@ void StartTraffic(void *argument)
 				vTaskDelay(greenDelay);	// Must be placed last, if not then redDelayMax logic will not work properly.
 			}
 			xSemaphoreGive(mutexHandle);
-		}
-#else
-		pendingTraffic = checkTraffic();									// Start by checking the current status of all vehicles
-		if ( pendingTraffic ) {												// If there are any vehicles enabled
-			xSemaphoreTake(mutexHandle, portMAX_DELAY);						// Wait INDEFINITELY to take the mutex and proceed with any of the scenarios below once taken
-
-			// SCENARIO 1: Traffic lights in all street directions are RED, and a vehicle appears from ONE direction
-			// If NEITHER DIRECTION is ENABLED and there is traffic from the NORTH OR SOUTH
-			if ( (!statusTraffic_NS && !statusTraffic_EW) && (statusVehicle_N || statusVehicle_S) && (!statusVehicle_E && !statusVehicle_W) ) {
-				activateTraffic(T_NORTHSOUTH, P_WEST);						// Enable traffic in NORTH and SOUTH direction, and the WEST pedestrian crossing
-				vTaskDelay(greenDelay);										// Hold the lights green for greenDelay ms.
-			// If NEITHER DIRECTION is ENABLED and there is traffic from the EAST OR WEST
-			} else if ( (!statusTraffic_NS && !statusTraffic_EW) && (statusVehicle_E || statusVehicle_W ) && (!statusVehicle_N && !statusVehicle_S) ) {
-				activateTraffic(T_EASTWEST, P_NORTH);						// Enable traffic in EAST and WEST direction, and the NORTH pedestrian crossing
-				vTaskDelay(greenDelay);										// Hold the lights green for greenDelay ms.
-
-
-			// SCENARIO 2 (R2.5): Traffic lights remain green if there are active cars in either allowed direction and no active cars are waiting on red traffic lights
-			// If there is only traffic in the NORTH and SOUTH direction, and it is caused by either the NORTH or SOUTH vehicle only
-			} else if ( (statusTraffic_NS && !statusTraffic_EW) && (statusVehicle_N || statusVehicle_S) && (!statusVehicle_E && !statusVehicle_W) ) {
-				// Then confirm that there is no pedestrian that wants to cross the NORTH pedestrian crossing AND that the traffic of the NORTH and SOUTH direction is enabled
-				if (statusTraffic_NS && !buttonNorthFlag) {					// If there is no pedestrian that wish to cross, keep the traffic static until a vehicle appears in ooposite direction
-					staticTraffic(); 										// Subscenario 2 (R2.6), where a vehicle appears in opposite direction, is handled within the staticTraffic function
-				// If a pedestrian suddenly wish to cross the NORTH pedestrian crossing
-				} else if (buttonNorthFlag) {
-					disableTraffic(T_NORTHSOUTH, P_WEST);					// Proceed by disabling traffic in NORTH and SOUTH direction, and for the WEST pedestrian crossing
-					activateTraffic(T_EASTWEST, P_NORTH);					// Enable traffic in EAST and WEST direction, and the NORTH pedestrian crossing
-					pedestrianReset(P_NORTH);								// Disable the BLUE NORTH crossing pending pedestrian indicator light by resetting it
-				// Else the traffic of the NORTH and SOUTH direction is not yet enabled and as such must be anbled before being kept at a static state
-				} else {
-					activateTraffic(T_NORTHSOUTH, P_WEST);					// Enable traffic in NORTH and SOUTH direction, and the WEST pedestrian crossing
-					staticTraffic();										// Keep the traffic static until either a pedestrian or vehicle wants to cross the current traffic direction
-				}
-			// If there is only traffic in the EAST and WEST direction, and it is caused by either the EAST or WEST vehicle only
-			} else if ( (!statusTraffic_NS && statusTraffic_EW) && (statusVehicle_E || statusVehicle_W ) && (!statusVehicle_N && !statusVehicle_S) ) {
-				// Then confirm that there is no pedestrian that wants to cross the WEST pedestrian crossing AND that the traffic of the EAST and WEST direction is enabled
-				if (statusTraffic_EW && !buttonWestFlag) {
-					staticTraffic(); 										// Subscenario 2 (R2.6), where a vehicle appears in opposite direction, is handled within the staticTraffic function
-					// If a pedestrian suddenly wish to cross the WEST pedestrian crossing
-				} else if (buttonWestFlag) {
-					disableTraffic(T_EASTWEST, P_NORTH);					// Proceed by disabling traffic in EAST and WEST direction, and for the NORTH pedestrian crossing
-					activateTraffic(T_NORTHSOUTH, P_WEST);					// Enable traffic in NORTH and SOUTH direction, and the WEST pedestrian crossing
-					pedestrianReset(P_WEST);								// Disable the BLUE WEST crossing pending pedestrian indicator light by resetting it
-				// Else the traffic of the EAST and WEST direction is not yet enabled and as such must be anbled before being kept at a static state
-				} else {
-					activateTraffic(T_EASTWEST, P_NORTH);					// Enable traffic in EAST and WEST direction, and the NORTH pedestrian crossing
-					staticTraffic();										// Keep the traffic static until either a pedestrian or vehicle wants to cross the current traffic direction
-				}
-
-
-			// SCENARIO 3 (R2.7): A car arrives at a RED light and there are NO a active cars in either allowed direction, causing the RED traffic lights to immediately transition to GREEN
-			// If traffic is enabled for the EAST and WEST direction, and vehicles appear from NORTH and SOUTH when there are no vehicles approaching from EAST or WEST
-			} else if ( (!statusTraffic_NS && statusTraffic_EW) && (statusVehicle_N || statusVehicle_S) && (!statusVehicle_E && !statusVehicle_W)) {
-				disableTraffic(T_EASTWEST, P_NORTH);						// Proceed by disabling traffic in EAST and WEST direction, and for the NORTH pedestrian crossing
-				activateTraffic(T_NORTHSOUTH, P_WEST);						// Enable traffic in NORTH and SOUTH direction, and the WEST pedestrian crossing
-			// If traffic is enabled for the NORTH and SOUTH direction, and vehicles appear from EAST and WEST when there are no vehicles approaching from NORTH or SOUTH
-			} else if ( (statusTraffic_NS && !statusTraffic_EW) && (statusVehicle_E || statusVehicle_W) && (!statusVehicle_N && !statusVehicle_S)) {
-				disableTraffic(T_NORTHSOUTH, P_WEST);						// Proceed by disabling traffic in NORTH and SOUTH direction, and for the WEST pedestrian crossing
-				activateTraffic(T_EASTWEST, P_NORTH);						// Enable traffic in EAST and WEST direction, and the NORTH pedestrian crossing
-
-
-			// SCENARIO 4: Congestion, which requires cycling between currently enabled direction, similar to the logic of the idle task
-			// If there are vehicles appearing from every direction
-			} else if ( (statusVehicle_E || statusVehicle_W ) && (statusVehicle_N || statusVehicle_S)) {
-				// Confirm if the currently enabled traffic direction is NORTH and SOUTH
-				if (statusTraffic_NS) {
-					disableTraffic(T_NORTHSOUTH, P_WEST);					// Proceed by disabling traffic in NORTH and SOUTH direction, and for the WEST pedestrian crossing
-					activateTraffic(T_EASTWEST, P_NORTH);					// Enable traffic in EAST and WEST direction, and the NORTH pedestrian crossing
-				// If currently enabled traffic direction is NOT NORTH and SOUTH, it must be EAST and WEST
-				} else {
-					disableTraffic(T_EASTWEST, P_NORTH);					// Proceed by disabling traffic in EAST and WEST direction, and for the NORTH pedestrian crossing
-					activateTraffic(T_NORTHSOUTH, P_WEST);					// Enable traffic in NORTH and SOUTH direction, and the WEST pedestrian crossing
-				}
-				vTaskDelay(greenDelay); 									// Must be placed last, if not then redDelayMax logic will not work properly.
-
-			// END OF ALL SCENARIOS
-			}
-			xSemaphoreGive(mutexHandle);									// Return mutex for other tasks to take
 		}
 #endif
 		osDelay(1);
@@ -764,6 +762,7 @@ void StartToggleW(void *argument)
 	/* Infinite loop */
 	for(;;)
 	{
+#ifdef RUN_TOGGLEN
 		// Initial check if the WEST pedestrian crossing has turned GREEN OR if the button ISR flag have been reset to low
 		if(statusPedestrian_W || !buttonWestFlag) {
 			pedestrianReset(P_WEST);	// Reset the BLUE indicator light bit to low at the shift register
@@ -771,6 +770,8 @@ void StartToggleW(void *argument)
 			pedestrianPending(P_WEST);	// Toggle the BLUE indicator light ON and OFF
 			vTaskDelay(toggleFreq);		// wait toggleFreq ms for the next recursive toggle of the BLUE indicator light
 		}
+#else
+#endif
 		osDelay(1);
 	}
 	/* USER CODE END StartToggleW */
@@ -827,6 +828,8 @@ void StartToggleN(void *argument)
 	/* Infinite loop */
 	for(;;)
 	{
+#ifdef RUN_TOGGLEN
+
 		// Initial check if the NORTH pedestrian crossing has turned GREEN OR if the button ISR flags have been reset to low
 		if(statusPedestrian_N || !buttonNorthFlag) {
 			pedestrianReset(P_NORTH);	// Reset the BLUE indicator light bit to low at the shift register
@@ -834,6 +837,8 @@ void StartToggleN(void *argument)
 			pedestrianPending(P_NORTH);	// Toggle the BLUE indicator light ON and OFF
 			vTaskDelay(toggleFreq);		// wait toggleFreq ms for the next recursive toggle of the BLUE indicator light
 		}
+#else
+#endif
 		osDelay(1);
 	}
 	/* USER CODE END StartToggleN */

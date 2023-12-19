@@ -85,7 +85,7 @@ void staticTraffic(){
 		if(buttonWestFlag) {							// If the WEST PEDESTRIAN CROSSING BUTTON is triggered, then wait for pedestrianDelay ms
 			vTaskDelay(pedestrianDelay);				// after waiting pedestrianDelay ms, break out of the while loop and proceed with next instruction (disabling the EAST and WEST traffic lights)
 			break;
-		} else if(statusVehicle_N || statusVehicle_S) {	// If the NORTH OR SOUTH vehicle switches indicate that there is traffic
+		} else if(statusVehicle_N || statusVehicle_S) {	// If the NORTH OR SOUTH vehicle switches indicate that there suddenly is traffic in opposite direction
 			vTaskDelay(redDelayMax);					// then wait redDelayMax, before breaking out of the while loop and proceeding with next instruction (disabling EAST and WEST traffic lights)
 			break;
 		}												// Incase the while loop is not broken out of, proceed to recursively...
