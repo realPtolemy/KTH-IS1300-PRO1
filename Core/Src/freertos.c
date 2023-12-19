@@ -15,6 +15,43 @@
  *
  ******************************************************************************
  */
+
+/*
+ ************************************************************************************
+ *  Created on: Dec 8, 2023															*
+ *      Author: Love Mitteregger													*
+ ************************************************************************************
+ *																					*
+ *	MIT License is applied for the following tasks, and the following tasks only:	*
+ *	- StartIdle																		*
+ *	- StartPedestrian																*
+ *	- StartTraffic																	*
+ *	- StartToggleW																	*
+ *	- StartToggleN																	*
+ *	- StartPedestrianB																*
+ *	Defined in the code below within this 'freertos.c' file.						*
+ *																					*
+ *	Copyright (c) 2023 Love Mitteregger												*
+ *																					*
+ *	Permission is hereby granted, free of charge, to any person obtaining a copy	*
+ *	of this software and associated documentation files (the "Software"), to deal	*
+ *	in the Software without restriction, including without limitation the rights	*
+ *	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell		*
+ *	copies of the Software, and to permit persons to whom the Software is			*
+ *	furnished to do so, subject to the following conditions:						*
+ *																					*
+ *	The above copyright notice and this permission notice shall be included in all	*
+ *	copies or substantial portions of the Software.									*
+ *																					*
+ *	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR		*
+ *	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,		*
+ *	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE		*
+ *	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER			*
+ *	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,	*
+ *	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE	*
+ *	SOFTWARE.																		*
+ *																					*
+ ************************************************************************************/
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
@@ -249,6 +286,60 @@ void MX_FREERTOS_Init(void) {
  * @brief  Function implementing the idleTask thread.
  * @param  argument: Not used
  * @retval None
+ *
+ * The StartIdle task is assigned a priority level of 9 out of 48.
+ *
+ * The conditions for the StartIdle task to run is that no other
+ * higher priority task currently is executing a larger set of
+ * instructions (occupying resources).
+ *
+ * Furthermore, the functions within the task are only executed if
+ * the StartIdle task has been given the mutex semaphore or if
+ * there is no pending traffic in any direction and if neither the
+ * pedestrian crossing buttons have been activated. Note that
+ * the StartIdle task can of course run while there is pending
+ * traffic, or either of the pedestrian corssing buttons have been
+ * activated, if it has already taken the mutex semaphore.
+ *
+ * The purpose of the task is to simulate a state where there are no
+ * active cars in any direction, and no pedestrians who wish to cross
+ * at a given point of time.
+ *
+ * Despite no external activity, the idle task circulates between
+ * the enable and disable traffic lights protocols, pending the
+ * active traffic and pedestrian lights of each street direction
+ * synchroniously, without keeping traffic enabled in both
+ * directions simultaneously.
+ *
+ * The StartIdle task ensures that an enable or disable sequence
+ * completes for a given direction, before it can be interrupted by
+ * a higher priority task. This is done by giving the StartIdle
+ * task the mutexHandle semaphore, preventing the other tasks to
+ * utilize the resources of the microprocessor unit.
+ *
+ * Once a sequence is completed and the traffic lights of a
+ * direction is set, the mutex is returned and available
+ * for another task to take.
+ *
+ * Another task may then take the mutex as it is returned and,
+ * for example, renable the traffic lights of the direction that just
+ * were disabled, before returning the mutex and allowing for the
+ * StartIdle task to retake the mutex and proceeding with its next
+ * instruction.
+ *
+ * If this occurs, there may be a risk that the StartIdle tasks next
+ * in line instruction is set to enable the traffic lights of the
+ * opposite direction of the renabled direction, as the StartIdle task
+ * previously had deactiavated the renabled direction. Causing all
+ * traffic lights to go green, resulting in havoc.
+ *
+ * To avoid that the green lights of a traffic direction is enabled while
+ * the opposite traffic direction already is enabled, due to for example
+ * the routine of another task that for a while took the mutex, a check
+ * is implemented to confirm that the traffic lights of the opposite
+ * direction are indeed already turned red, before proceeding with
+ * sequence for enabling the traffic lights for the specific direction.
+ *
  */
 /* USER CODE END Header_StartIdle */
 void StartIdle(void *argument)
@@ -284,30 +375,33 @@ void StartIdle(void *argument)
 			vTaskDelay(greenDelay);
 		}
 #else
-		if( !pendingTraffic && (!buttonWestFlag || !buttonNorthFlag)) {
+		// Recursive while loop that first checks if there is NOT any pending traffic NOR any activated pedestrian crossing buttons, before proceeding
+		if( !pendingTraffic && (!buttonWestFlag || !buttonNorthFlag) ) {
+			// If there currently is traffic in the NORTH and SOUTH direction, and the NORTH pedestrian crossing buttons have not been activated
 			if (statusTraffic_NS && !buttonNorthFlag) {
-				xSemaphoreTake(mutexHandle, 0);
-				disableTraffic(T_NORTHSOUTH, P_WEST);
-				xSemaphoreGive(mutexHandle);
-				vTaskDelay(mutexDelay);
-				xSemaphoreTake(mutexHandle, portMAX_DELAY);
-				if (!statusTraffic_NS) {
-					activateTraffic(T_EASTWEST, P_NORTH);
+				xSemaphoreTake(mutexHandle, 0);				// Take the mutexHandle semaphore IF it is available AT THIS VERY INSTANT
+				disableTraffic(T_NORTHSOUTH, P_WEST);		// If mutex could be taken, proceed with disable sequence for the NORTH and SOUTH direction and WEST pedestrian crossing
+				xSemaphoreGive(mutexHandle);				// Give mutex back for any other task to take
+				vTaskDelay(mutexDelay);						// Small delay to ensure that the MPU properly gives back the mutex semaphore
+				xSemaphoreTake(mutexHandle, portMAX_DELAY);	// If mutex is available, take it again, else WAIT INDEFINITELY until the mutex semaphore becomes available
+				if (!statusTraffic_NS) {					// When mutex finally is taken, confirm that there currently is not enabled traffic in the NORTH and SOUTH direction
+					activateTraffic(T_EASTWEST, P_NORTH);	// If traffic in NORTH and SOUTH direction is disabled, then enable traffic in EAST and WEST direction and NORTH pedestrian crossing
 				}
-				xSemaphoreGive(mutexHandle);
+				xSemaphoreGive(mutexHandle);				// Return the semaphore for other tasks to take
+			// Else, if there currently is traffic in the EAST and WEST direction, and the WEST pedestrian crossing buttons have not been activated
 			} else if (statusTraffic_EW && !buttonWestFlag){
-				xSemaphoreTake(mutexHandle, 0);
-				disableTraffic(T_EASTWEST, P_NORTH);
-				xSemaphoreGive(mutexHandle);
-				vTaskDelay(mutexDelay);
-				xSemaphoreTake(mutexHandle, portMAX_DELAY);
-				if (!statusTraffic_EW) {
-					activateTraffic(T_NORTHSOUTH, P_WEST);
+				xSemaphoreTake(mutexHandle, 0);				// Take the mutexHandle semaphore IF it is available AT THIS VERY INSTANT
+				disableTraffic(T_EASTWEST, P_NORTH);		// If mutex could be taken, proceed with disable sequence for the EAST and WEST direction and NORTH pedestrian crossing
+				xSemaphoreGive(mutexHandle);				// Give mutex back for any other task to take
+				vTaskDelay(mutexDelay);						// Small delay to ensure that the MPU properly gives back the mutex semaphore
+				xSemaphoreTake(mutexHandle, portMAX_DELAY); // If mutex is available, take it again, else WAIT INDEFINITELY until the mutex semaphore becomes available
+				if (!statusTraffic_EW) {					// When mutex finally is taken, confirm that there currently is not enabled traffic in the EAST and WEST direction
+					activateTraffic(T_NORTHSOUTH, P_WEST);	// If traffic in EAST and WEST direction is disabled, then enable traffic in NORTH and SOUTH direction and WEST pedestrian crossing
 				}
-				xSemaphoreGive(mutexHandle);
+				xSemaphoreGive(mutexHandle);				// Return the semaphore for other tasks to take
 			}
-			vTaskDelay(greenDelay);
-		}
+			vTaskDelay(greenDelay);							// Either the NORT and SOUTH or EAST and WEST directions have been enabled, the traffic lights should remain GREEN for greenDelay ms
+		}													// before the StartIdle task recursively runs for another loop and cycles the traffic lights statuses
 #endif
 		osDelay(1);
 	}
