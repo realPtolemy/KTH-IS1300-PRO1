@@ -98,7 +98,7 @@ const TickType_t pedestrianDelay = pdMS_TO_TICKS(3000);
 const TickType_t safetyDelay = pdMS_TO_TICKS(3000);		// Real life ~6000 ms
 const TickType_t greenDelay = pdMS_TO_TICKS(8000); 		// Real life ~47000 ms
 const TickType_t orangeDelay = pdMS_TO_TICKS(2500); 	// Real life ~5000 ms
-const TickType_t redDelayMax = pdMS_TO_TICKS(500);		// Real life ?? ms
+const TickType_t redDelayMax = pdMS_TO_TICKS(1000);		// Real life ?? ms
 
 long startTime;
 long endTime;
@@ -717,7 +717,7 @@ void StartTraffic(void *argument)
  * @param argument: Not used
  * @retval None
  *
- * The StartTraffic task is assigned a priority level 41 out of 48
+ * The StartToggle task is assigned a priority level 41 out of 48
  *
  * The purpose of the task is to let the BLUE pedestrian indicator
  * lights toggle on and of at toggleFreq ms, whenever a pedestrian
@@ -783,7 +783,7 @@ void StartToggleW(void *argument)
  * @param argument: Not used
  * @retval None
  *
- * The StartTraffic task is assigned a priority level 41 out of 48
+ * The StartToggle task is assigned a priority level 41 out of 48
  *
  * The purpose of the task is to let the BLUE pedestrian indicator
  * lights toggle on and of at toggleFreq ms, whenever a pedestrian
