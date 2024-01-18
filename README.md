@@ -1,4 +1,4 @@
-# TRAFFIC LIGHTS - EMBEDDED SYSTEMS
+# Traffic Lights - Embedded Systems
 This code is written for the main project of the course 
 Embedded Systems [IS1300] at KTH, Royal Institute of Technology.
 
